@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from pydantic import BaseModel
 from database import users_collection, donations_collection
 import bcrypt
@@ -93,7 +93,7 @@ def login(data: LoginData):
     })
 
     if not user:
-        return {"message": "User not found"}
+        raise HTTPException(status_code=401, detail="User not found")
 
     password_correct = bcrypt.checkpw(
         data.password.encode('utf-8'),
@@ -101,7 +101,7 @@ def login(data: LoginData):
     )
 
     if not password_correct:
-        return {"message": "Incorrect password"}
+        raise HTTPException(status_code=401, detail="Incorrect password")
 
     token = jwt.encode(
         {

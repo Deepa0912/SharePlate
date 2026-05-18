@@ -32,7 +32,7 @@ function Login() {
 
     } catch (error) {
 
-      alert("Login failed");
+      alert(error.response?.data?.detail || "Login failed");
 
       console.log(error);
 
