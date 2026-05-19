@@ -1,6 +1,17 @@
+"""
+main.py
+=======
+SharePlate FastAPI Backend
+Includes AI-powered donation priority prediction via priority_engine.py
+"""
+
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from database import users_collection, donations_collection
+from database import users_collection, donations_collection, ngos_collection
+from ngo_engine import recommend_ngo
+from priority_engine import predict_priority          # <-- AI priority engine
+from food_classifier import classify_food             # <-- AI food classifier
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
@@ -12,24 +23,26 @@ from bson import ObjectId
 
 load_dotenv()
 
-from fastapi.middleware.cors import CORSMiddleware
+# ---------------------------------------------------------------------------
+# App setup
+# ---------------------------------------------------------------------------
 
-app = FastAPI()
+app = FastAPI(title="SharePlate API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],          # restrict to your domain in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-JWT_SECRET = os.getenv("JWT_SECRET")
+JWT_SECRET = os.getenv("JWT_SECRET", "mysecretkey")
 
 
-# =========================
+# ===========================================================================
 # USER MODELS
-# =========================
+# ===========================================================================
 
 class User(BaseModel):
     name: str
@@ -43,155 +56,327 @@ class LoginData(BaseModel):
     password: str
 
 
-# =========================
+# ===========================================================================
+# NGO MODEL
+# ===========================================================================
+
+class NGO(BaseModel):
+    name: str
+    city: str
+    lat: float
+    lng: float
+    capacity: str          # "large" | "medium" | "small"
+    speciality: list[str]  # e.g. ["dairy", "perishable"]
+    contact: str
+    active: bool = True
+    description: str = ""
+
+
+# ===========================================================================
 # HOME ROUTE
-# =========================
+# ===========================================================================
 
 @app.get("/")
 def home():
-    return {"message": "SharePlate Backend Running"}
+    return {"message": "SharePlate Backend Running", "version": "2.0.0"}
 
 
-# =========================
+# ===========================================================================
 # SIGNUP API
-# =========================
+# ===========================================================================
 
 @app.post("/signup")
 def signup(user: User):
+    """Register a new user. Returns error if email already exists."""
 
-    existing_user = users_collection.find_one({
-        "email": user.email
-    })
+    existing_user = users_collection.find_one({"email": user.email})
 
     if existing_user:
-        return {"message": "User already exists"}
+        raise HTTPException(status_code=400, detail="User already exists")
 
+    # Hash password with bcrypt before storing
     hashed_password = bcrypt.hashpw(
-        user.password.encode('utf-8'),
-        bcrypt.gensalt()
+        user.password.encode("utf-8"),
+        bcrypt.gensalt(),
     )
 
     users_collection.insert_one({
-        "name": user.name,
-        "email": user.email,
+        "name":     user.name,
+        "email":    user.email,
         "password": hashed_password,
-        "role": user.role
+        "role":     user.role,
     })
 
     return {"message": "User created successfully"}
 
 
-# =========================
+# ===========================================================================
 # LOGIN API
-# =========================
+# ===========================================================================
 
 @app.post("/login")
 def login(data: LoginData):
+    """Authenticate user and return a signed JWT token."""
 
-    user = users_collection.find_one({
-        "email": data.email
-    })
+    user = users_collection.find_one({"email": data.email})
 
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
+    # Verify password against bcrypt hash
     password_correct = bcrypt.checkpw(
-        data.password.encode('utf-8'),
-        user["password"]
+        data.password.encode("utf-8"),
+        user["password"],
     )
 
     if not password_correct:
         raise HTTPException(status_code=401, detail="Incorrect password")
 
+    # Issue JWT valid for 24 hours
     token = jwt.encode(
         {
             "email": user["email"],
-            "exp": datetime.utcnow() + timedelta(days=1)
+            "role":  user.get("role", "donor"),
+            "exp":   datetime.utcnow() + timedelta(days=1),
         },
         JWT_SECRET,
-        algorithm="HS256"
+        algorithm="HS256",
     )
 
     return {
         "message": "Login successful",
-        "token": token
+        "token":   token,
+        "name":    user.get("name", ""),
+        "role":    user.get("role", "donor"),
     }
 
 
-# =========================
-# DONATE FOOD API
-# =========================
+# ===========================================================================
+# DONATE FOOD API  (with AI priority prediction)
+# ===========================================================================
 
 @app.post("/donate")
 async def donate_food(
-    food_name: str = Form(...),
-    quantity: str = Form(...),
-    expiry_time: str = Form(...),
-    location: str = Form(...),
-    donor_id: str = Form(...),
-    image: UploadFile = File(...)
+    food_name:   str        = Form(...),
+    quantity:    str        = Form(...),
+    expiry_time: str        = Form(...),
+    location:    str        = Form(...),
+    donor_id:    str        = Form(...),
+    image:       UploadFile = File(...),
 ):
+    """
+    Accept a food donation, upload image to Cloudinary,
+    predict AI priority, and store everything in MongoDB.
+    """
 
-    contents = await image.read()
-    uploaded_image = cloudinary.uploader.upload(contents)
+    # --- Upload image to Cloudinary ---
+    contents    = await image.read()
+    uploaded    = cloudinary.uploader.upload(contents)
+    image_url   = uploaded["secure_url"]
 
-    image_url = uploaded_image["secure_url"]
+    # --- AI Priority Prediction ---
+    priority = predict_priority(
+        food_name=food_name,
+        quantity=quantity,
+        expiry_time=expiry_time,
+    )
 
+    # --- Build donation document ---
     donation = {
-        "food_name": food_name,
-        "quantity": quantity,
+        "food_name":   food_name,
+        "quantity":    quantity,
         "expiry_time": expiry_time,
-        "location": location,
-        "donor_id": donor_id,
-        "image_url": image_url,
-        "status": "Pending"
+        "location":    location,
+        "donor_id":    donor_id,
+        "image_url":   image_url,
+        "status":      "Pending",
+        "priority":    priority,           # AI-assigned field
+        "created_at":  datetime.utcnow().isoformat(),
     }
 
     result = donations_collection.insert_one(donation)
 
     return {
-        "message": "Donation added successfully",
+        "message":     "Donation added successfully",
         "donation_id": str(result.inserted_id),
-        "image_url": image_url
+        "image_url":   image_url,
+        "priority":    priority,           # return to frontend immediately
     }
 
 
-# =========================
+# ===========================================================================
 # GET ALL DONATIONS API
-# =========================
+# ===========================================================================
 
 @app.get("/donations")
 def get_donations():
+    """
+    Fetch all donations from MongoDB.
+    Returns priority field and recommended_ngo for each donation.
+    Donations are sorted by priority (HIGH first) then by creation time.
+    """
+
+    # Priority sort order: HIGH=0, MEDIUM=1, LOW=2
+    priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+
+    # Load all active NGOs once — avoids N+1 queries
+    all_ngos = list(ngos_collection.find({"active": True}))
 
     donations = []
 
     for donation in donations_collection.find():
 
+        # Back-fill priority for old donations that lack the field
+        priority = donation.get("priority") or predict_priority(
+            food_name=donation.get("food_name", ""),
+            quantity=donation.get("quantity", "0"),
+            expiry_time=donation.get("expiry_time", ""),
+        )
+
+        # AI NGO recommendation
+        recommended = recommend_ngo(
+            ngos=all_ngos,
+            food_name=donation.get("food_name", ""),
+            quantity=donation.get("quantity", "0"),
+            priority=priority,
+            location=donation.get("location", ""),
+        )
+
         donations.append({
-            "id": str(donation["_id"]),
-            "food_name": donation["food_name"],
-            "quantity": donation["quantity"],
-            "expiry_time": donation["expiry_time"],
-            "location": donation["location"],
-            "donor_id": donation["donor_id"],
-            "image_url": donation["image_url"],
-            "status": donation["status"]
+            "id":              str(donation["_id"]),
+            "food_name":       donation["food_name"],
+            "quantity":        donation["quantity"],
+            "expiry_time":     donation["expiry_time"],
+            "location":        donation["location"],
+            "donor_id":        donation["donor_id"],
+            "image_url":       donation["image_url"],
+            "status":          donation["status"],
+            "priority":        priority,
+            "created_at":      donation.get("created_at", ""),
+            "recommended_ngo": recommended,
         })
+
+    # Sort: HIGH → MEDIUM → LOW, then by created_at descending
+    donations.sort(
+        key=lambda d: (
+            priority_order.get(d["priority"], 1),
+            d["created_at"],
+        )
+    )
 
     return donations
 
 
-# =========================
+# ===========================================================================
+# NGO APIs
+# ===========================================================================
+
+@app.post("/ngo", status_code=201)
+def create_ngo(ngo: NGO):
+    """Insert a new NGO into the ngos collection."""
+    result = ngos_collection.insert_one(ngo.dict())
+    return {
+        "message": "NGO created successfully",
+        "ngo_id":  str(result.inserted_id),
+    }
+
+
+@app.get("/recommended-ngo/{donation_id}")
+def get_recommended_ngo(donation_id: str):
+    """
+    Run the AI scoring engine against all active NGOs for a specific donation.
+    Returns the best-matching NGO with name, distance_km, and match_percentage.
+    """
+    # Fetch the donation
+    donation = donations_collection.find_one({"_id": ObjectId(donation_id)})
+    if not donation:
+        raise HTTPException(status_code=404, detail="Donation not found")
+
+    # Back-fill priority if needed
+    priority = donation.get("priority") or predict_priority(
+        food_name=donation.get("food_name", ""),
+        quantity=donation.get("quantity", "0"),
+        expiry_time=donation.get("expiry_time", ""),
+    )
+
+    all_ngos = list(ngos_collection.find({"active": True}))
+
+    recommended = recommend_ngo(
+        ngos=all_ngos,
+        food_name=donation.get("food_name", ""),
+        quantity=donation.get("quantity", "0"),
+        priority=priority,
+        location=donation.get("location", ""),
+    )
+
+    if not recommended:
+        raise HTTPException(status_code=404, detail="No active NGOs found")
+
+    return recommended
+
+
+# ===========================================================================
+# PREDICT PRIORITY (standalone endpoint — useful for frontend preview)
+# ===========================================================================
+
+@app.post("/predict-priority")
+def predict_priority_endpoint(
+    food_name:   str = Form(...),
+    quantity:    str = Form(...),
+    expiry_time: str = Form(...),
+):
+    """
+    Preview the AI-predicted priority without creating a donation.
+    Useful for showing the badge in the form before submission.
+    """
+    priority = predict_priority(food_name, quantity, expiry_time)
+    return {"priority": priority}
+
+
+# ===========================================================================
 # DELETE DONATION API
-# =========================
+# ===========================================================================
 
 @app.delete("/donation/{donation_id}")
 def delete_donation(donation_id: str):
+    """Delete a donation by its MongoDB ObjectId."""
 
-    donations_collection.delete_one({
-        "_id": ObjectId(donation_id)
-    })
+    result = donations_collection.delete_one({"_id": ObjectId(donation_id)})
 
-    return {
-        "message": "Donation deleted successfully"
-    }
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Donation not found")
+
+    return {"message": "Donation deleted successfully"}
+
+
+# ===========================================================================
+# AI FOOD IMAGE CLASSIFICATION API
+# ===========================================================================
+
+@app.post("/classify-food")
+async def classify_food_endpoint(image: UploadFile = File(...)):
+    """
+    Accept an uploaded food image and return:
+      - food_name        : predicted food type (human-readable)
+      - confidence       : confidence score 0-100
+      - label_raw        : raw ImageNet class name
+      - top_predictions  : list of food matches found in top-5
+      - is_food          : True if a food label was matched
+
+    Uses MobileNetV2 pretrained on ImageNet (loaded at startup).
+    Auto-fill threshold is handled on the frontend (>= 80% confidence).
+    """
+    if not image.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Expected an image file, got: {image.content_type}"
+        )
+
+    try:
+        image_bytes = await image.read()
+        result = classify_food(image_bytes)
+        return result
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Classification error: {exc}")

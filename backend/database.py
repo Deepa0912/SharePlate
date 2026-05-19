@@ -15,6 +15,6 @@ client = MongoClient(
 
 db = client["shareplate"]
 
-users_collection = db["users"]
-
+users_collection     = db["users"]
 donations_collection = db["donations"]
+ngos_collection      = db["ngos"]
