@@ -88,7 +88,7 @@ def generate_chat_response(message: str, history: list, lang: str = "en") -> str
         )
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash-8b",
+            model="gemini-1.5-flash",
             contents=formatted_history,
             config=types.GenerateContentConfig(
                 system_instruction=dynamic_system,

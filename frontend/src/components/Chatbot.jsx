@@ -39,13 +39,27 @@ export default function Chatbot() {
   }, [messages, isOpen]);
 
   // ── Voice recognition setup ───────────────────────────────────────────────
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setVoiceStatus("⚠️ Voice not supported in this browser.");
       return;
+    }
+
+    if (navigator.permissions && navigator.permissions.query) {
+      try {
+        const status = await navigator.permissions.query({ name: "microphone" });
+        if (status.state === "denied") {
+          setVoiceStatus(
+            "❌ Microphone access denied. Please allow microphone permission in your browser settings."
+          );
+          return;
+        }
+      } catch {
+        // ignore permission query failures and continue
+      }
     }
 
     const recognition = new SpeechRecognition();
@@ -77,7 +91,11 @@ export default function Chatbot() {
 
     recognition.onerror = (ev) => {
       console.error("SpeechRecognition error:", ev.error);
-      setVoiceStatus(`❌ Error: ${ev.error}`);
+      const errorMessage =
+        ev.error === "not-allowed" || ev.error === "service-not-allowed"
+          ? "❌ Microphone access blocked. Please allow microphone permission in your browser settings."
+          : `❌ Error: ${ev.error}`;
+      setVoiceStatus(errorMessage);
       setIsListening(false);
     };
 

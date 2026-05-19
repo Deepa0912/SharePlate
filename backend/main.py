@@ -22,11 +22,151 @@ import jwt
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
+import re
 import cloudinary.uploader
 import cloudinary_config
 from bson import ObjectId
 
 load_dotenv()
+
+# ---------------------------------------------------------------------------
+# Donation forecasting utilities
+# ---------------------------------------------------------------------------
+PERISHABLE_KEYWORDS = [
+    "salad", "fruit", "milk", "paneer", "yogurt", "curd", "dairy",
+    "fish", "meat", "chicken", "egg", "cooked", "perishable",
+    "vegetable", "vegetables", "juice", "sandwich",
+]
+
+def _parse_expiry_minutes(expiry_time: str) -> int:
+    content = str(expiry_time or "").strip().lower()
+    if not content:
+        return 180
+
+    match = re.search(r"(\d+(?:\.\d+)?)", content)
+    if not match:
+        return 180
+
+    value = float(match.group(1))
+    if "day" in content or re.search(r"\bd\b", content):
+        return int(value * 24 * 60)
+    if "hour" in content or "hr" in content or re.search(r"\bh\b", content):
+        return int(value * 60)
+    if "min" in content or "minute" in content:
+        return int(value)
+    if "plate" in content or "serving" in content or "kg" in content or "litre" in content:
+        return int(value * 60 if value <= 24 else 1440)
+    return int(value)
+
+
+def _parse_datetime(value: str) -> datetime:
+    try:
+        return datetime.fromisoformat(value)
+    except Exception:
+        try:
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+        except Exception:
+            return datetime.utcnow()
+
+
+def _build_spoilage_info(food_name: str, expiry_time: str, created_at: str) -> dict:
+    total_minutes = _parse_expiry_minutes(expiry_time)
+    created_dt = _parse_datetime(created_at)
+    age_minutes = max(0, int((datetime.utcnow() - created_dt).total_seconds() / 60))
+    remaining_minutes = max(0, total_minutes - age_minutes)
+
+    if remaining_minutes <= 0:
+        label = "Expired"
+        urgency = "HIGH"
+        score = 100
+        note = "Expired — cannot be used safely"
+    elif remaining_minutes <= 120:
+        label = "Critical pickup in next 2h"
+        urgency = "HIGH"
+        score = 95
+        note = "Immediate pickup needed"
+    elif remaining_minutes <= 360:
+        label = "Use within 6h"
+        urgency = "MEDIUM"
+        score = 75
+        note = "Moderate spoilage risk"
+    elif remaining_minutes <= 24 * 60:
+        label = "Good for today"
+        urgency = "LOW"
+        score = 45
+        note = "Safe for same-day redistribution"
+    else:
+        label = "Fresh — good for later"
+        urgency = "LOW"
+        score = 20
+        note = "Low spoilage risk"
+
+    if any(keyword in (food_name or "").lower() for keyword in PERISHABLE_KEYWORDS) and urgency == "LOW":
+        label = "Perishable item — use within 12h"
+        score = max(score, 55)
+        note = "Perishable food — prioritize sooner"
+
+    return {
+        "remaining_minutes": remaining_minutes,
+        "spoilage_label": label,
+        "urgency_level": urgency,
+        "spoilage_score": score,
+        "spoilage_note": note,
+    }
+
+
+def _build_donation_payload(donation: dict, all_ngos: list[dict]) -> dict:
+    priority = donation.get("priority") or predict_priority(
+        food_name=donation.get("food_name", ""),
+        quantity=donation.get("quantity", "0"),
+        expiry_time=donation.get("expiry_time", ""),
+    )
+
+    recommended = recommend_ngo(
+        ngos=all_ngos,
+        food_name=donation.get("food_name", ""),
+        quantity=donation.get("quantity", "0"),
+        priority=priority,
+        location=donation.get("location", ""),
+    )
+
+    spoilage = _build_spoilage_info(
+        food_name=donation.get("food_name", ""),
+        expiry_time=donation.get("expiry_time", ""),
+        created_at=donation.get("created_at", datetime.utcnow().isoformat()),
+    )
+
+    meal_suggestions = donation.get("meal_suggestions") or suggest_recipes(
+        donation.get("food_name", ""),
+        donation.get("quantity", "0"),
+    )
+
+    route_text = None
+    if recommended and recommended.get("name"):
+        route_text = (
+            f"Pickup from {donation.get('location', 'donor location')} "
+            f"and deliver to {recommended['name']} ({recommended.get('distance_km', 'N/A')} km)"
+        )
+
+    return {
+        "id": str(donation.get("_id", "")),
+        "food_name": donation.get("food_name", ""),
+        "quantity": donation.get("quantity", ""),
+        "expiry_time": donation.get("expiry_time", ""),
+        "location": donation.get("location", ""),
+        "donor_id": donation.get("donor_id", ""),
+        "image_url": donation.get("image_url", ""),
+        "status": donation.get("status", "Pending"),
+        "booked_by": donation.get("booked_by", None),
+        "booked_at": donation.get("booked_at", None),
+        "collected_at": donation.get("collected_at", None),
+        "priority": priority,
+        "created_at": donation.get("created_at", ""),
+        "recommended_ngo": recommended,
+        "meal_suggestions": meal_suggestions,
+        "spoilage": spoilage,
+        "pickup_route": route_text,
+    }
 
 # ---------------------------------------------------------------------------
 # App setup
@@ -334,25 +474,34 @@ async def donate_food(
     )
 
     # --- Build donation document ---
+    meal_suggestions = suggest_recipes(food_name, quantity)
+    spoilage = _build_spoilage_info(food_name, expiry_time, datetime.utcnow().isoformat())
+
     donation = {
-        "food_name":   food_name,
-        "quantity":    quantity,
-        "expiry_time": expiry_time,
-        "location":    location,
-        "donor_id":    donor_id,
-        "image_url":   image_url,
-        "status":      "Pending",
-        "priority":    priority,           # AI-assigned field
-        "created_at":  datetime.utcnow().isoformat(),
+        "food_name":        food_name,
+        "quantity":         quantity,
+        "expiry_time":      expiry_time,
+        "location":         location,
+        "donor_id":         donor_id,
+        "image_url":        image_url,
+        "status":           "Pending",
+        "priority":         priority,
+        "created_at":       datetime.utcnow().isoformat(),
+        "meal_suggestions": meal_suggestions,
+        "spoilage":         spoilage,
+        "urgency_level":    spoilage["urgency_level"],
     }
 
     result = donations_collection.insert_one(donation)
 
     return {
-        "message":     "Donation added successfully",
-        "donation_id": str(result.inserted_id),
-        "image_url":   image_url,
-        "priority":    priority,           # return to frontend immediately
+        "message":           "Donation added successfully",
+        "donation_id":       str(result.inserted_id),
+        "image_url":         image_url,
+        "priority":          priority,
+        "urgency_level":     spoilage["urgency_level"],
+        "spoilage_label":    spoilage["spoilage_label"],
+        "meal_suggestions":  meal_suggestions,
     }
 
 
@@ -364,54 +513,18 @@ async def donate_food(
 def get_donations():
     """
     Fetch all donations from MongoDB.
-    Returns priority field and recommended_ngo for each donation.
-    Donations are sorted by priority (HIGH first) then by creation time.
+    Returns enriched donation objects with AI recommendations, spoilage forecasts, meal suggestions, and pickup routing.
+    Congratulations: this endpoint now powers unique SharePlate features.
     """
 
-    # Priority sort order: HIGH=0, MEDIUM=1, LOW=2
     priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
-
-    # Load all active NGOs once — avoids N+1 queries
     all_ngos = list(ngos_collection.find({"active": True}))
 
-    donations = []
+    donations = [
+        _build_donation_payload(donation, all_ngos)
+        for donation in donations_collection.find()
+    ]
 
-    for donation in donations_collection.find():
-
-        # Back-fill priority for old donations that lack the field
-        priority = donation.get("priority") or predict_priority(
-            food_name=donation.get("food_name", ""),
-            quantity=donation.get("quantity", "0"),
-            expiry_time=donation.get("expiry_time", ""),
-        )
-
-        # AI NGO recommendation
-        recommended = recommend_ngo(
-            ngos=all_ngos,
-            food_name=donation.get("food_name", ""),
-            quantity=donation.get("quantity", "0"),
-            priority=priority,
-            location=donation.get("location", ""),
-        )
-
-        donations.append({
-            "id":              str(donation["_id"]),
-            "food_name":       donation["food_name"],
-            "quantity":        donation["quantity"],
-            "expiry_time":     donation["expiry_time"],
-            "location":        donation["location"],
-            "donor_id":        donation["donor_id"],
-            "image_url":       donation["image_url"],
-            "status":          donation.get("status", "Pending"),
-            "booked_by":       donation.get("booked_by", None),
-            "booked_at":       donation.get("booked_at", None),
-            "collected_at":    donation.get("collected_at", None),
-            "priority":        priority,
-            "created_at":      donation.get("created_at", ""),
-            "recommended_ngo": recommended,
-        })
-
-    # Sort: HIGH → MEDIUM → LOW, then by created_at descending
     donations.sort(
         key=lambda d: (
             priority_order.get(d["priority"], 1),
@@ -468,6 +581,42 @@ def get_recommended_ngo(donation_id: str):
         raise HTTPException(status_code=404, detail="No active NGOs found")
 
     return recommended
+
+
+@app.get("/volunteer-shifts")
+def get_volunteer_shifts(max_results: int = 3):
+    """
+    Return micro-shift pickup suggestions for volunteers.
+    Uses urgent donations, NGO matches, and available status to highlight top routes.
+    """
+    all_ngos = list(ngos_collection.find({"active": True}))
+    shifts = []
+
+    for donation in donations_collection.find({"status": {"$in": ["Pending", "Available", "Approved", None]}}):
+        payload = _build_donation_payload(donation, all_ngos)
+        if payload["spoilage"]["urgency_level"] in ["HIGH", "MEDIUM"]:
+            shifts.append({
+                "id": payload["id"],
+                "food_name": payload["food_name"],
+                "quantity": payload["quantity"],
+                "location": payload["location"],
+                "urgency_level": payload["spoilage"]["urgency_level"],
+                "spoilage_label": payload["spoilage"]["spoilage_label"],
+                "recommended_ngo": payload["recommended_ngo"],
+                "pickup_route": payload["pickup_route"],
+                "created_at": payload["created_at"],
+                "spoilage_score": payload["spoilage"]["spoilage_score"],
+            })
+
+    shifts.sort(
+        key=lambda s: (
+            0 if s["urgency_level"] == "HIGH" else 1,
+            s["recommended_ngo"]["distance_km"] if s["recommended_ngo"] else 999,
+            s["created_at"],
+        )
+    )
+
+    return {"shifts": shifts[:max_results]}
 
 
 # ===========================================================================

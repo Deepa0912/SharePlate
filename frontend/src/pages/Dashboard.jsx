@@ -89,12 +89,14 @@ function Dashboard() {
     console.error("JWT parse error:", e);
   }
 
-  const [donations,   setDonations]   = useState([]);
-  const [ngoMap,      setNgoMap]      = useState({});
-  const [ngoLoading,  setNgoLoading]  = useState({});
-  const [submitting,  setSubmitting]  = useState(false);
-  const [search,      setSearch]      = useState("");
-  const [activeTab,   setActiveTab]   = useState("all"); // "all", "available", "bookings", "donations"
+  const [donations,      setDonations]      = useState([]);
+  const [ngoMap,         setNgoMap]         = useState({});
+  const [ngoLoading,     setNgoLoading]     = useState({});
+  const [volunteerShifts, setVolunteerShifts] = useState([]);
+  const [shiftLoading,   setShiftLoading]   = useState(false);
+  const [submitting,     setSubmitting]     = useState(false);
+  const [search,         setSearch]         = useState("");
+  const [activeTab,      setActiveTab]      = useState("all"); // "all", "available", "bookings", "donations"
 
   const [formData, setFormData] = useState({
     food_name:   "",
@@ -183,6 +185,18 @@ function Dashboard() {
   };
 
   // ── Fetch all donations ───────────────────────────────────────────────────
+  const fetchVolunteerShifts = async () => {
+    setShiftLoading(true);
+    try {
+      const { data } = await API.get("/volunteer-shifts?max_results=3");
+      setVolunteerShifts(data.shifts || []);
+    } catch (err) {
+      console.error("[Dashboard] volunteer shifts error:", err);
+    } finally {
+      setShiftLoading(false);
+    }
+  };
+
   const fetchDonations = async () => {
     try {
       const { data } = await API.get("/donations");
@@ -193,7 +207,10 @@ function Dashboard() {
     }
   };
 
-  useEffect(() => { fetchDonations(); }, []);
+  useEffect(() => {
+    fetchDonations();
+    fetchVolunteerShifts();
+  }, []);
 
   // Handle AI-driven operations dispatched from Chatbot
   useEffect(() => {
@@ -558,6 +575,43 @@ function Dashboard() {
         ))}
       </div>
 
+      {/* ── Volunteer Micro-Shifts ───────────────────────────────────────────── */}
+      <section style={S.volunteerSection}>
+        <div style={S.sectionHeader}>
+          <div>
+            <p style={S.sectionSub}>🚚 Volunteer Micro-Shift</p>
+            <h2 style={{ margin: 0, fontSize: "20px", color: "#0f172a" }}>Top urgent pickups</h2>
+          </div>
+          {shiftLoading && <span style={{ color: "#64748b", fontSize: "13px" }}>Loading shifts...</span>}
+        </div>
+
+        {volunteerShifts.length > 0 ? (
+          <div style={S.shiftGrid}>
+            {volunteerShifts.map((shift) => (
+              <div key={shift.id} style={S.shiftCard}>
+                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
+                  <div>
+                    <h3 style={{ margin: 0, fontSize: "16px", color: "#111827" }}>{shift.food_name}</h3>
+                    <p style={{ margin: "8px 0 0", color: "#475569", fontSize: "13px" }}>{shift.quantity} · {shift.location}</p>
+                  </div>
+                  <span style={shift.urgency_level === "HIGH" ? S.highBadge : S.mediumBadge}>
+                    {shift.urgency_level}
+                  </span>
+                </div>
+                <div style={{ marginTop: "14px", fontSize: "13px", color: "#334155" }}>
+                  <p style={{ margin: "0 0 8px" }}><strong>{shift.recommended_ngo?.name || "NGO not found"}</strong> · {shift.recommended_ngo?.distance_km ?? "—"} km</p>
+                  <p style={{ margin: 0, color: "#6b7280" }}>{shift.pickup_route || "Route info unavailable."}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div style={S.emptyShift}>
+            <p style={{ margin: 0, color: "#64748b" }}>No urgent volunteer shifts available yet.</p>
+          </div>
+        )}
+      </section>
+
       {/* ── Tab Filters ──────────────────────────────────────────────────── */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "24px", borderBottom: "1px solid #e2e8f0", paddingBottom: "1px" }}>
         {[
@@ -650,6 +704,9 @@ function Dashboard() {
                     <InfoRow icon="⚖️" label={t('col_qty')}      value={donation.quantity} />
                     <InfoRow icon="⏰" label={t('col_expiry')}  value={expiryInfo.label} />
                     <InfoRow icon="📍" label={t('col_location')} value={donation.location} />
+                    <InfoRow icon="🔥" label="Spoilage" value={donation.spoilage?.spoilage_label || donation.spoilage_label || "Unknown"} />
+                    <InfoRow icon="🍽️" label="Meal Match" value={donation.meal_suggestions?.[0]?.recipe_name ? `${donation.meal_suggestions[0].recipe_name} (${donation.meal_suggestions[0].servings} servings)` : "N/A"} />
+                    {donation.pickup_route && <InfoRow icon="🚚" label="Pickup route" value={donation.pickup_route} />}
                     <InfoRow icon="🔄" label={t('col_status')}   value={expiryInfo.isExpired ? "Expired" : (donation.status || "Pending")} />
                   </div>
 
@@ -1081,6 +1138,67 @@ const S = {
     background: "#ffffff", borderRadius: "22px",
     overflow: "hidden", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03)",
     border: "1px solid #e2e8f0",
+  },
+  volunteerSection: {
+    maxWidth: "1280px",
+    margin: "0 auto 34px",
+    padding: "0 28px",
+  },
+  sectionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    gap: "16px",
+    marginBottom: "18px",
+  },
+  sectionSub: {
+    margin: 0,
+    color: "#0f766e",
+    fontSize: "13px",
+    fontWeight: "700",
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+  },
+  shiftGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+    gap: "18px",
+  },
+  shiftCard: {
+    borderRadius: "22px",
+    border: "1px solid #e2e8f0",
+    padding: "18px",
+    background: "#ffffff",
+    boxShadow: "0 8px 20px -10px rgba(15, 23, 42, 0.12)",
+  },
+  highBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    backgroundColor: "#fef2f2",
+    color: "#b91c1c",
+    borderRadius: "999px",
+    padding: "4px 10px",
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  mediumBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    backgroundColor: "#fef9c3",
+    color: "#78350f",
+    borderRadius: "999px",
+    padding: "4px 10px",
+    fontSize: "11px",
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
+  emptyShift: {
+    borderRadius: "22px",
+    border: "1px dashed #cbd5e1",
+    padding: "28px",
+    background: "#ffffff",
+    textAlign: "center",
   },
   cardImg: { width: "100%", height: "200px", objectFit: "cover", display: "block" },
   priorityTag: {
