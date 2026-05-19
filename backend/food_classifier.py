@@ -3,16 +3,16 @@ food_classifier.py
 ==================
 AI-powered food image classification for SharePlate.
 
-Uses MobileNetV2 pretrained on ImageNet (Keras Applications).
-- Model weights auto-download on first run (~14 MB)
-- No custom training required
-- Filters predictions to a curated food-label whitelist
-- Returns top predicted food name + confidence percentage
+Uses MobileNetV2 pretrained on ImageNet via keras.applications.
+  - Model weights auto-download on first run (~14 MB)
+  - No custom training required
+  - Filters predictions to a curated food-label whitelist
+  - Returns top predicted food name + confidence percentage
 
 Production notes:
-- Model is loaded once at module level (singleton) for fast API response
-- Thread-safe: tf.keras inference is stateless
-- Supports JPEG, PNG, WEBP, BMP image formats via PIL
+  - Model is loaded once at module level (singleton) for fast API response
+  - Compatible with TensorFlow >= 2.16 and Keras 3.x
+  - Supports JPEG, PNG, WEBP, BMP image formats via PIL
 """
 
 import io
@@ -22,13 +22,25 @@ from typing import Optional
 import numpy as np
 from PIL import Image, UnidentifiedImageError
 
-# TensorFlow / Keras ─────────────────────────────────────────────────────────
-import tensorflow as tf
-from tensorflow.keras.applications import MobileNetV2
-from tensorflow.keras.applications.mobilenet_v2 import (
-    preprocess_input,
-    decode_predictions,
-)
+# ---------------------------------------------------------------------------
+# TF / Keras — support both legacy tf.keras and standalone keras 3.x
+# ---------------------------------------------------------------------------
+try:
+    # TF 2.16+ ships with standalone Keras 3 as the default backend
+    import keras
+    from keras.applications import MobileNetV2
+    from keras.applications.mobilenet_v2 import preprocess_input, decode_predictions
+    import tensorflow as tf
+    _BACKEND = "keras3"
+except ImportError:
+    # Fallback: older TF with bundled tf.keras
+    import tensorflow as tf
+    from tensorflow.keras.applications import MobileNetV2
+    from tensorflow.keras.applications.mobilenet_v2 import (
+        preprocess_input,
+        decode_predictions,
+    )
+    _BACKEND = "tf_keras"
 
 logger = logging.getLogger(__name__)
 
@@ -36,9 +48,16 @@ logger = logging.getLogger(__name__)
 # Model singleton — loaded once when the module is first imported
 # ---------------------------------------------------------------------------
 
-logger.info("[food_classifier] Loading MobileNetV2 weights …")
-_MODEL: tf.keras.Model = MobileNetV2(weights="imagenet", include_top=True)
-_MODEL.trainable = False          # inference only
+logger.info("[food_classifier] Loading MobileNetV2 weights (backend=%s)…", _BACKEND)
+
+_MODEL: object = MobileNetV2(weights="imagenet", include_top=True)
+
+# Mark non-trainable for inference (API differs between Keras 3 and tf.keras)
+try:
+    _MODEL.trainable = False
+except Exception:
+    pass  # some Keras 3 builds raise on setting trainable after build
+
 logger.info("[food_classifier] Model ready.")
 
 
@@ -47,7 +66,7 @@ logger.info("[food_classifier] Model ready.")
 # Maps ImageNet class name  →  friendly display name
 # ---------------------------------------------------------------------------
 
-FOOD_LABEL_MAP: dict[str, str] = {
+FOOD_LABEL_MAP: dict = {
     # Fruits & vegetables
     "banana":            "Banana",
     "lemon":             "Lemon",
@@ -78,7 +97,6 @@ FOOD_LABEL_MAP: dict[str, str] = {
     "cheeseburger":      "Cheeseburger",
     "burrito":           "Burrito",
     "taco":              "Taco",
-    "burrito":           "Burrito",
     "pretzel":           "Pretzel",
     "bagel":             "Bagel",
     "French_loaf":       "Bread / Loaf",
@@ -154,8 +172,17 @@ FOOD_LABEL_MAP: dict[str, str] = {
     "salad":             "Salad",
 }
 
-# Flat set of known food class substrings for flexible matching
-_FOOD_SUBSTRINGS = list(FOOD_LABEL_MAP.keys())
+
+def _match_food_label(imagenet_class: str) -> Optional[str]:
+    """
+    Map an ImageNet class name to a human-readable food label.
+    Returns None if the class is not food-related.
+    """
+    label_lower = imagenet_class.lower().replace("-", "_")
+    for key, display_name in FOOD_LABEL_MAP.items():
+        if key in label_lower or label_lower in key:
+            return display_name
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -178,22 +205,10 @@ def _load_and_preprocess(image_bytes: bytes) -> np.ndarray:
         raise ValueError(f"Cannot decode image: {exc}") from exc
 
     img = img.resize((224, 224), Image.LANCZOS)
-    arr = np.array(img, dtype=np.float32)        # shape: (224, 224, 3)
-    arr = np.expand_dims(arr, axis=0)             # shape: (1, 224, 224, 3)
-    arr = preprocess_input(arr)                   # scale to [-1, 1]
+    arr = np.array(img, dtype=np.float32)         # shape: (224, 224, 3)
+    arr = np.expand_dims(arr, axis=0)              # shape: (1, 224, 224, 3)
+    arr = preprocess_input(arr)                    # scale to [-1, 1]
     return arr
-
-
-def _match_food_label(imagenet_class: str) -> Optional[str]:
-    """
-    Map an ImageNet class name to a human-readable food label.
-    Returns None if the class is not food-related.
-    """
-    label_lower = imagenet_class.lower().replace("-", "_")
-    for key, display_name in FOOD_LABEL_MAP.items():
-        if key in label_lower or label_lower in key:
-            return display_name
-    return None
 
 
 # ---------------------------------------------------------------------------
@@ -212,21 +227,21 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
     Returns
     -------
     dict with keys:
-        food_name   : str   — friendly food name (e.g. "Pizza")
-        confidence  : float — confidence 0–100 (e.g. 94.3)
-        label_raw   : str   — raw ImageNet class (e.g. "pizza")
-        top_predictions : list[dict] — all food matches found in top_k
-        is_food     : bool  — False if no food label found in top_k
+        food_name        : str   — friendly food name (e.g. "Pizza")
+        confidence       : float — confidence 0–100 (e.g. 94.3)
+        label_raw        : str   — raw ImageNet class (e.g. "pizza")
+        top_predictions  : list[dict] — all food matches found in top_k
+        is_food          : bool  — False if no food label found in top_k
     """
     # 1. Preprocess image
     arr = _load_and_preprocess(image_bytes)
 
-    # 2. Run inference
-    preds = _MODEL.predict(arr, verbose=0)             # shape: (1, 1000)
+    # 2. Run inference — verbose=0 suppresses progress bar
+    preds = _MODEL.predict(arr, verbose=0)         # shape: (1, 1000)
 
     # 3. Decode top-k ImageNet predictions
+    #    Returns: list of (synset_id, class_name, confidence_float)
     decoded = decode_predictions(preds, top=top_k)[0]
-    # decoded: list of (synset_id, class_name, confidence_float) tuples
 
     # 4. Filter for food-related labels
     food_matches = []
@@ -239,8 +254,8 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
                 "confidence": round(float(confidence) * 100, 2),
             })
 
+    # 5. Handle no-food case — return raw top-1 with is_food=False
     if not food_matches:
-        # No food label in top-k — return the raw top-1 prediction
         top_class = decoded[0][1]
         top_conf  = round(float(decoded[0][2]) * 100, 2)
         return {

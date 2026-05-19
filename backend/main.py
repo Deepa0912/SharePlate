@@ -12,6 +12,7 @@ from database import users_collection, donations_collection, ngos_collection
 from ngo_engine import recommend_ngo
 from priority_engine import predict_priority          # <-- AI priority engine
 from food_classifier import classify_food             # <-- AI food classifier
+from analytics_engine import compute_analytics         # <-- Analytics engine
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
@@ -380,3 +381,26 @@ async def classify_food_endpoint(image: UploadFile = File(...)):
         raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Classification error: {exc}")
+
+
+# ===========================================================================
+# GET ANALYTICS API
+# ===========================================================================
+
+@app.get("/analytics")
+def get_analytics():
+    """
+    Fetch all donations from MongoDB and compute statistics.
+    Returns:
+      - summary (total donations, meals saved, active locations)
+      - monthly_trends (last 6 months chronological donations counts)
+      - top_foods (top 5 most common foods)
+      - top_locations (top 5 busiest locations)
+    """
+    try:
+        # Load all donations from the database
+        donations = list(donations_collection.find())
+        # Compute and return analytics data
+        return compute_analytics(donations)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to load analytics: {exc}")
