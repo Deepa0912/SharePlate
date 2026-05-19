@@ -1,46 +1,51 @@
 // src/App.jsx
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics";
+import Chatbot from "./components/Chatbot";
+import { LanguageProvider } from "./context/LanguageContext";
 
-
-function ProtectedRoute({ children }) {
-
+// Simple route guard
+const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("token");
-
-  return token ? children : <Navigate to="/login" />;
-}
-
+  if (!token) return <Navigate to="/login" replace />;
+  return children;
+};
 
 function App() {
-
   return (
-    <BrowserRouter>
-
-      <Routes>
-
-        <Route path="/" element={<Home />} />
-
-        <Route path="/login" element={<Login />} />
-
-        <Route path="/signup" element={<Signup />} />
-
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-
-      </Routes>
-
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute>
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+        <Chatbot />
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }
 

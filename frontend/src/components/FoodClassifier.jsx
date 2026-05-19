@@ -233,9 +233,8 @@ function FoodClassifier({ onFoodDetected }) {
 const styles = {
   wrapper: {
     borderRadius: "20px",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.15)",
-    backdropFilter: "blur(12px)",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
     padding: "20px",
     marginBottom: "18px",
   },
@@ -246,12 +245,12 @@ const styles = {
     marginBottom: "16px",
   },
   headerIcon:  { fontSize: "26px", lineHeight: 1 },
-  headerTitle: { color: "#ecfdf5", fontWeight: "700", fontSize: "15px", margin: 0 },
-  headerSub:   { color: "#6ee7b7", fontSize: "12px", margin: "2px 0 0" },
+  headerTitle: { color: "#0f172a", fontWeight: "700", fontSize: "15px", margin: 0 },
+  headerSub:   { color: "#059669", fontSize: "12px", margin: "2px 0 0" },
 
   // Drop zone
   dropZone: {
-    border: "2px dashed rgba(110,231,183,0.40)",
+    border: "2px dashed #a7f3d0",
     borderRadius: "16px",
     minHeight: "150px",
     display: "flex",
@@ -261,22 +260,22 @@ const styles = {
     transition: "all 0.2s ease",
     overflow: "hidden",
     position: "relative",
-    background: "rgba(16,185,129,0.04)",
+    background: "#f0fdf4",
   },
   dropZoneActive: {
-    border: "2px dashed #10b981",
-    background: "rgba(16,185,129,0.12)",
+    border: "2px dashed #059669",
+    background: "#d1fae5",
   },
   dropZoneWithPreview: {
-    border: "2px solid rgba(110,231,183,0.30)",
+    border: "2px solid #cbd5e1",
     minHeight: "220px",
   },
 
   // Placeholder
   dropPlaceholder: { textAlign: "center", padding: "24px" },
   dropIcon:  { fontSize: "36px", display: "block", marginBottom: "8px" },
-  dropTitle: { color: "#a7f3d0", fontWeight: "600", fontSize: "14px", margin: "0 0 4px" },
-  dropSub:   { color: "#6ee7b7", fontSize: "12px", margin: 0 },
+  dropTitle: { color: "#059669", fontWeight: "600", fontSize: "14px", margin: "0 0 4px" },
+  dropSub:   { color: "#475569", fontSize: "12px", margin: 0 },
 
   // Preview
   preview: {
@@ -288,7 +287,7 @@ const styles = {
   // Spinner overlay
   spinnerOverlay: {
     position: "absolute", inset: 0,
-    background: "rgba(6,78,59,0.75)",
+    background: "rgba(255,255,255,0.85)",
     backdropFilter: "blur(4px)",
     display: "flex", flexDirection: "column",
     alignItems: "center", justifyContent: "center", gap: "12px",
@@ -296,19 +295,19 @@ const styles = {
   },
   spinner: {
     width: "40px", height: "40px",
-    border: "4px solid rgba(110,231,183,0.30)",
-    borderTop: "4px solid #10b981",
+    border: "4px solid #e2e8f0",
+    borderTop: "4px solid #059669",
     borderRadius: "50%",
   },
-  spinnerText: { color: "#a7f3d0", fontSize: "14px", fontWeight: "600", margin: 0 },
+  spinnerText: { color: "#059669", fontSize: "14px", fontWeight: "600", margin: 0 },
 
   // Error
   errorBox: {
     marginTop: "12px",
-    background: "rgba(220,38,38,0.15)",
-    border: "1px solid rgba(220,38,38,0.35)",
+    background: "#fef2f2",
+    border: "1px solid #fca5a5",
     borderRadius: "12px",
-    color: "#fca5a5",
+    color: "#dc2626",
     padding: "10px 14px",
     fontSize: "13px",
     display: "flex", alignItems: "center", gap: "8px",
@@ -321,8 +320,8 @@ const styles = {
   },
   predictionRow: {
     display: "flex", alignItems: "center", gap: "14px",
-    background: "rgba(16,185,129,0.10)",
-    border: "1px solid rgba(16,185,129,0.25)",
+    background: "#ecfdf5",
+    border: "1px solid #a7f3d0",
     borderRadius: "14px",
     padding: "12px 16px",
     marginBottom: "10px",
@@ -334,37 +333,37 @@ const styles = {
     minWidth: "56px", textAlign: "center",
   },
   foodName: {
-    color: "#ecfdf5", fontWeight: "700", fontSize: "16px",
+    color: "#0f172a", fontWeight: "700", fontSize: "16px",
     margin: "0 0 3px",
   },
-  foodSub: { color: "#6ee7b7", fontSize: "12px", margin: 0 },
+  foodSub: { color: "#059669", fontSize: "12px", margin: 0 },
 
   // Top list
   topList: {
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(255,255,255,0.10)",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
     borderRadius: "12px",
     padding: "10px 14px",
     marginBottom: "12px",
   },
   topListLabel: {
-    color: "#9ca3af", fontSize: "11px", fontWeight: "700",
+    color: "#64748b", fontSize: "11px", fontWeight: "700",
     textTransform: "uppercase", letterSpacing: "0.05em",
     margin: "0 0 8px",
   },
   topListItem: {
     display: "flex", justifyContent: "space-between",
     paddingBottom: "5px", marginBottom: "5px",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
+    borderBottom: "1px solid #e2e8f0",
   },
-  topListName: { color: "#d1fae5", fontSize: "13px" },
-  topListConf: { color: "#6ee7b7", fontSize: "13px", fontWeight: "600" },
+  topListName: { color: "#1e293b", fontSize: "13px" },
+  topListConf: { color: "#059669", fontSize: "13px", fontWeight: "600" },
 
   // Retry
   retryBtn: {
-    background: "rgba(16,185,129,0.15)",
-    border: "1px solid rgba(16,185,129,0.35)",
-    color: "#a7f3d0",
+    background: "#ecfdf5",
+    border: "1px solid #a7f3d0",
+    color: "#059669",
     borderRadius: "10px",
     padding: "8px 16px",
     fontSize: "13px", fontWeight: "600",

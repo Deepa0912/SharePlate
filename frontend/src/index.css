@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --primary-color: #059669; /* emerald-600 */
+  --primary-hover: #047857; /* emerald-700 */
+  --bg-gradient-from: #f8fafc; /* slate-50 */
+  --bg-gradient-via: #f1f5f9;  /* slate-100 */
+  --bg-gradient-to: #ecfdf5;   /* emerald-50 */
+  --bg-light: #ffffff; 
+  --bg-light-gradient-from: #f0fdf4; /* green-50 */
+  --bg-light-gradient-to: #ffffff;
+  --text-primary: #059669;
+  --border-primary: #e2e8f0; /* slate-200 */
+  --navbar-color: rgba(255, 255, 255, 0.9);
+  --accent-color: #10b981; /* emerald-500 */
+  --card-bg: #ffffff;
+  --text-dark: #1e293b; /* slate-800 */
+  --text-light: #475569; /* slate-600 */
+}
+
+/* Theme helper classes for crisp light theme */
+.theme-bg-gradient {
+  background: linear-gradient(135deg, var(--bg-gradient-from) 0%, var(--bg-gradient-via) 50%, var(--bg-gradient-to) 100%) !important;
+}
+
+.theme-bg-light-gradient {
+  background: linear-gradient(to bottom right, var(--bg-light-gradient-from), var(--bg-light-gradient-to)) !important;
+}
+
+.theme-btn-primary {
+  background: var(--primary-color) !important;
+  color: #ffffff !important;
+  transition: all 0.2s ease !important;
+  font-weight: 600 !important;
+}
+
+.theme-btn-primary:hover {
+  background: var(--primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.theme-text-primary {
+  color: var(--primary-color) !important;
+}
+
+.theme-text-accent {
+  color: var(--accent-color) !important;
+}
+
+.theme-border-primary {
+  border-color: var(--primary-color) !important;
+}
+
+.theme-bg-light {
+  background-color: var(--bg-light) !important;
+}
+
+.theme-navbar {
+  background: var(--navbar-color) !important;
+  backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.theme-card {
+  background: var(--card-bg) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03) !important;
+}
