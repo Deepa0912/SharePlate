@@ -188,10 +188,11 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict], all_donations:
 
 app = FastAPI(title="SharePlate API", version="2.0.0")
 
-# Whitelist: Localhost, fixed Vercel domain, and any Vercel dynamic domains (*.vercel.app)
+# Whitelist: Localhost, Vercel domain, and your new Render frontend domain
 ORGS = [
     "http://localhost:5173",
     "https://share-plate-ws37.vercel.app",
+    "https://shareplate-frontend-rq1v.onrender.com",
 ]
 
 app.add_middleware(
