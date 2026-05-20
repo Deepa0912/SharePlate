@@ -7,6 +7,9 @@ load_dotenv()
 
 MONGO_URL = os.getenv("MONGO_URI") or os.getenv("MONGO_URL")
 
+if not MONGO_URL:
+    raise ValueError("CRITICAL ERROR: 'MONGO_URI' environment variable is missing. Please add it to your Vercel/Render settings.")
+
 client = MongoClient(
     MONGO_URL,
     tls=True,
