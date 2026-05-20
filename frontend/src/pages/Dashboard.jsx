@@ -266,8 +266,20 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState("all");
   const [formData, setFormData] = useState({ food_name: "", quantity: "", expiry_time: "", location: "", donor_id: currentUserEmail });
   const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [postcardData, setPostcardData] = useState(null);
   const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", type: "alert", onConfirm: null, onCancel: null });
+
+  const myDonations = useMemo(() => donations.filter(d => d.donor_id === currentUserEmail), [donations, currentUserEmail]);
+  const dailyTarget = 25; // kg
+  const todayTotal = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return myDonations
+      .filter(d => d.created_at.startsWith(today))
+      .reduce((acc, curr) => acc + (parseFloat(curr.quantity) || 5), 0);
+  }, [myDonations]);
+  const goalProgress = Math.min((todayTotal / dailyTarget) * 100, 100);
 
   const customAlert = (message, title = "Mission Update") => {
     return new Promise((resolve) => {
@@ -404,13 +416,13 @@ function Dashboard() {
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-emerald-100/50">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-              Live Impact Engine v2.5.0
+              Mission Control Engine v2.5.0
             </div>
             <h2 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight leading-tight">
-              Mission <span className="text-emerald-600">Command</span>
+              Operational <span className="text-emerald-600">Command</span>
             </h2>
             <p className="text-slate-500 font-medium mt-3 text-lg max-w-xl">
-              Strategic oversight of zero-waste operations. Manage rescues, track nutrient loops, and scale your impact.
+              Strategic oversight of zero-waste operations. Manage rescues and scale your impact.
             </p>
           </motion.div>
 
@@ -426,173 +438,179 @@ function Dashboard() {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Controls & Form */}
-          <section className="lg:col-span-4 space-y-8 sticky top-24">
+          {/* Main Action Hub */}
+          <section className="lg:col-span-8 space-y-12">
+
+            {/* Daily Mission Goal Progress */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm hover:shadow-2xl transition-all duration-700 relative overflow-hidden"
+              initial={{ opacity: 0, y: 10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-[3rem] p-10 border border-emerald-100 shadow-sm overflow-hidden relative"
             >
-              <div className="relative z-10">
-                <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
-                    <Heart className="w-6 h-6" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50/50 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-10">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-slate-900 leading-none mb-1">Daily Mission Goal</h3>
+                      <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">Rescuing Fresh Surplus Today</p>
+                    </div>
                   </div>
-                  Launch Mission
+                  <div className="w-full h-5 bg-slate-100 rounded-full overflow-hidden mb-4 border border-slate-200/50">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${goalProgress}%` }}
+                      transition={{ duration: 1.5, ease: "circOut" }}
+                      className="h-full bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    {goalProgress >= 100 ? "🌟 Mission accomplished! You've successfully secured the grid for today." : `Launch ${Math.max(0, dailyTarget - todayTotal)} kg more to hit the humanitarian target.`}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-3xl p-6 border border-slate-100 text-center min-w-[140px]">
+                  <div className="text-4xl font-black text-slate-900 tracking-tighter mb-1">{todayTotal}</div>
+                  <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">{goalProgress.toFixed(0)}% Complete</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Quick Stats Grid */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <QuickImpactStat label="Nutrients Saved" value={`${donations.reduce((acc, d) => acc + (parseFloat(d.quantity) || 5), 0)} kg`} color="text-emerald-700" bg="bg-emerald-50" icon={Package} />
+              <QuickImpactStat label="Lives Touched" value={donations.length * 45} color="text-blue-700" bg="bg-blue-50" icon={Users} />
+              <QuickImpactStat label="Collective Karma" value={donations.length * 100} color="text-amber-700" bg="bg-amber-50" icon={Star} />
+            </div>
+
+            {/* Inventory Hub */}
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                <div className="flex items-center gap-3 bg-white p-1.5 rounded-[1.8rem] border border-slate-100 shadow-sm overflow-x-auto no-scrollbar">
+                  <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>All Units</TabButton>
+                  <TabButton active={activeTab === "available"} onClick={() => setActiveTab("available")}>Available</TabButton>
+                  <TabButton active={activeTab === "bookings"} onClick={() => setActiveTab("bookings")}>My Claims</TabButton>
+                  <TabButton active={activeTab === "donations"} onClick={() => setActiveTab("donations")}>My Posts</TabButton>
+                </div>
+                <div className="relative group">
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
+                  <input
+                    type="text"
+                    placeholder="Search the grid..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full md:w-64 pl-14 pr-8 py-4 bg-white border border-slate-100 rounded-[1.5rem] text-sm font-medium focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none shadow-sm transition-all"
+                  />
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="h-96 flex flex-col items-center justify-center gap-4 bg-white rounded-[3rem] border border-slate-100 animate-pulse">
+                  <div className="w-16 h-16 rounded-full border-4 border-slate-100 border-t-emerald-500 animate-spin"></div>
+                  <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">Syncing with Peer Hubs...</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-8">
+                  <AnimatePresence mode="popLayout">
+                    {filtered.map(don => (
+                      <motion.div
+                        layout
+                        key={don.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                      >
+                        <DonationCard
+                          donation={don}
+                          t={t}
+                          handleBook={handleBook}
+                          handleCollect={handleCollect}
+                          handleCancelBooking={handleCancelBooking}
+                          handleDelete={handleDelete}
+                          handleViewPostcard={handleViewPostcard}
+                          currentUserEmail={currentUserEmail}
+                          ngo={ngoMap[don.id]}
+                          ngoLoading={ngoLoading[don.id]}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Sidebar Portal */}
+          <aside className="lg:col-span-4 space-y-10 sticky top-24">
+            {/* Deploy New Mission */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden border border-white/5"
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+              <div className="relative z-10">
+                <h3 className="text-2xl font-black text-white mb-8 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
+                  New Mission
                 </h3>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="p-1.5 bg-slate-50 border border-slate-100 rounded-3xl mb-8">
+                  <div className="p-1 bg-white/5 border border-white/10 rounded-3xl mb-8 overflow-hidden">
                     <FoodClassifier onFoodDetected={handleFoodDetected} setImageFile={setImage} />
                   </div>
 
                   <div className="grid gap-5">
-                    <DashboardInput label={t('field_food')} name="food_name" value={formData.food_name} onChange={handleChange} placeholder="e.g. Traditional Thali" icon="🍱" />
-                    <DashboardInput label={t('field_quantity')} name="quantity" value={formData.quantity} onChange={handleChange} placeholder="e.g. 50 Servings" icon="📊" />
+                    <DashboardInput label="Mission Name" name="food_name" value={formData.food_name} onChange={handleChange} placeholder="Traditional Thali" />
+                    <DashboardInput label="Servings" name="quantity" value={formData.quantity} onChange={handleChange} placeholder="50 Plates" />
                     <div className="grid grid-cols-2 gap-4">
-                      <DashboardInput label="Urgency" name="expiry_time" value={formData.expiry_time} onChange={handleChange} placeholder="4 hours" icon="⏳" />
-                      <DashboardInput label="Hub" name="location" value={formData.location} onChange={handleChange} placeholder="Sector 4" icon="📍" />
+                      <DashboardInput label="Urgency" name="expiry_time" value={formData.expiry_time} onChange={handleChange} placeholder="4h" />
+                      <DashboardInput label="Sector" name="location" value={formData.location} onChange={handleChange} placeholder="Hub A" />
                     </div>
                   </div>
 
                   <button
                     type="submit"
                     disabled={submitting}
-                    className={`w-full py-5 rounded-[1.5rem] font-black text-lg transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 mt-4 ${submitting
-                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                      : "bg-slate-900 hover:bg-emerald-600 text-white shadow-slate-200"
+                    className={`w-full py-5 rounded-2xl font-black text-lg transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 mt-4 ${submitting
+                      ? "bg-slate-800 text-slate-500 cursor-not-allowed"
+                      : "bg-emerald-600 text-white hover:bg-emerald-500 shadow-emerald-500/20"
                       }`}
                   >
-                    {submitting ? "Processing Data..." : "Execute Donation →"}
+                    {submitting ? "Deploying..." : "Launch Mission"}
+                    {!submitting && <ArrowRight className="w-5 h-5" />}
                   </button>
                 </form>
               </div>
             </motion.div>
 
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl group">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl transition-transform group-hover:scale-150"></div>
-              <h4 className="text-xl font-black mb-4 flex items-center gap-3">
-                <Star className="w-6 h-6 text-amber-400 fill-amber-400" />
-                Strategic Insights
-              </h4>
-              <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8 opacity-80">
-                Our AI Hub actively manages nutrient retention by matching pickups to the most efficient logistics routes in Sector 4.
-              </p>
-              <div className="space-y-4">
-                <ImpactBar label="Logistics Efficiency" val={94} color="bg-emerald-500" />
-                <ImpactBar label="Community Reach" val={88} color="bg-blue-500" />
-              </div>
-            </div>
-          </section>
-
-          {/* Feed & Stats */}
-          <section className="lg:col-span-8 space-y-12">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <QuickImpactStat label="Missions" value={donations.length} color="text-emerald-600" bg="bg-emerald-50" icon={Package} />
-              <QuickImpactStat label="In Transit" value={donations.filter(d => d.status === 'Booked').length} color="text-blue-600" bg="bg-blue-50" icon={Clock} />
-              <QuickImpactStat label="Impact" value="4.2" color="text-amber-600" bg="bg-amber-50" icon={Star} />
-              <QuickImpactStat label="Hubs" value="12" color="text-rose-600" bg="bg-rose-50" icon={MapPin} />
-            </div>
-
+            {/* Visual Analytics */}
             <SustainabilityAnalytics data={chartData} />
 
-            <div className="bg-white border border-slate-100 rounded-[2.5rem] p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="flex bg-slate-50 p-1.5 rounded-full w-full md:w-auto">
-                <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>All Units</TabButton>
-                <TabButton active={activeTab === "available"} onClick={() => setActiveTab("available")}>Available</TabButton>
-                <TabButton active={activeTab === "bookings"} onClick={() => setActiveTab("bookings")}>My Claims</TabButton>
-                <TabButton active={activeTab === "donations"} onClick={() => setActiveTab("donations")}>My Posts</TabButton>
-              </div>
-              <div className="relative w-full md:w-80 group">
-                <input
-                  type="text"
-                  placeholder="Strategic Search..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all font-bold text-sm text-slate-800"
-                />
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+            {/* Strategic Access Points */}
+            <div className="grid grid-cols-2 gap-4">
+              <Link to="/leaderboard" className="bg-white border border-slate-100 rounded-3xl p-6 text-center hover:border-emerald-200 transition-all group shadow-sm">
+                <Users className="w-6 h-6 text-slate-300 group-hover:text-emerald-500 mx-auto mb-3 transition-colors" />
+                <div className="text-[10px] font-black text-slate-400 group-hover:text-slate-900 transition-colors uppercase tracking-widest">Hall of Heroes</div>
+              </Link>
+              <div className="bg-white border border-slate-100 rounded-3xl p-6 text-center hover:border-blue-200 transition-all group shadow-sm">
+                <Package className="w-6 h-6 text-slate-300 group-hover:text-blue-500 mx-auto mb-3 transition-colors" />
+                <div className="text-[10px] font-black text-slate-400 group-hover:text-slate-900 transition-colors uppercase tracking-widest">Global Ops</div>
               </div>
             </div>
-
-            {/* Shift Dashboard */}
-            <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm">
-              <div className="flex items-center justify-between mb-10">
-                <div>
-                  <h4 className="text-2xl font-black text-slate-900 tracking-tight">Active Micro-Shifts</h4>
-                  <div className="h-1 w-12 bg-emerald-500 mt-2 rounded-full"></div>
-                </div>
-              </div>
-
-              {volunteerShifts.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {volunteerShifts.map((shift) => (
-                    <div key={shift.id} className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 transition-all hover:border-emerald-200 hover:bg-emerald-50/20 group relative overflow-hidden">
-                      <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="text-xl font-black text-slate-800 group-hover:text-emerald-700 transition-colors leading-tight">{shift.food_name}</div>
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${shift.urgency_level === 'HIGH' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'
-                          }`}>
-                          {shift.urgency_level}
-                        </span>
-                      </div>
-                      <div className="space-y-3 mb-6">
-                        <div className="text-xs font-bold text-slate-500 flex items-center gap-3">
-                          <Package className="w-4 h-4 opacity-40" /> {shift.quantity}
-                        </div>
-                        <div className="text-xs font-bold text-slate-500 flex items-center gap-3">
-                          <MapPin className="w-4 h-4 opacity-40 text-rose-400" /> {shift.location}
-                        </div>
-                      </div>
-                      <div className="pt-6 border-t border-slate-200/50 flex flex-col gap-2">
-                        <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Optimum Route Found</div>
-                        <div className="text-[10px] font-bold text-slate-400">{shift.recommended_ngo?.name || "Tier 1 Hub"} • {shift.recommended_ngo?.distance_km ?? "1.4"} km</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="py-20 text-center text-slate-400 bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
-                  <Clock className="mx-auto mb-4 opacity-20" size={48} />
-                  <div className="uppercase tracking-[0.2em] text-[10px] font-black">Scanning for urgent missions...</div>
-                </div>
-              )}
-            </div>
-
-            {/* Donation Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
-              <AnimatePresence mode="popLayout">
-                {filtered.map((d) => (
-                  <motion.div
-                    layout
-                    key={d.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  >
-                    <DonationCard
-                      donation={d}
-                      t={t}
-                      handleBook={handleBook}
-                      handleCollect={handleCollect}
-                      handleCancelBooking={handleCancelBooking}
-                      handleDelete={handleDelete}
-                      handleViewPostcard={handleViewPostcard}
-                      currentUserEmail={currentUserEmail}
-                      ngo={ngoMap[d.id]}
-                      ngoLoading={!!ngoLoading[d.id]}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </section>
+          </aside>
         </div>
       </main>
 
-      {/* Modals */}
+      <AnimatePresence>
+        {postcardData && <Postcard data={postcardData} onClose={() => setPostcardData(null)} />}
+      </AnimatePresence>
       <Modal modalConfig={modalConfig} />
-      <Postcard data={postcardData} onClose={() => setPostcardData(null)} />
     </div>
   );
 }
