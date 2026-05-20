@@ -1,9 +1,9 @@
-// src/pages/Home.jsx
 import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
-import LanguageSelector from "../components/LanguageSelector";
+import Navbar from "../components/Navbar";
 import MissionGallery from "../components/MissionGallery";
 import { ArrowRight, Star, Heart, TrendingUp, Users, Package } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function Home() {
   const { t } = useLanguage();
@@ -21,23 +21,8 @@ function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900">
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-8 py-5 bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="text-3xl">🍽️</span>
-          <span className="text-2xl font-black tracking-tight text-slate-900">SharePlate</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <LanguageSelector />
-          <Link to="/login" className="px-6 py-2.5 font-bold text-white rounded-[1.25rem] transition-all hover:shadow-xl hover:shadow-emerald-200 active:scale-95 text-sm" style={{ background: "linear-gradient(135deg, #059669, #047857)" }}>
-            {t('login')}
-          </Link>
-          <Link to="/signup" className="px-6 py-2.5 font-bold border-2 rounded-[1.25rem] transition-all hover:bg-slate-50 active:scale-95 text-sm" style={{ borderColor: "#059669", color: "#059669" }}>
-            {t('signup')}
-          </Link>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
+      <Navbar />
 
       {/* Hero Section */}
       <div className="relative overflow-hidden pt-20 pb-32 px-6">

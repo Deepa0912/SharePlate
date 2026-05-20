@@ -9,6 +9,7 @@ export default function Navbar() {
     const { t } = useLanguage();
     const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
+    const token = localStorage.getItem("token");
 
     const handleLogout = () => {
         localStorage.removeItem("token");
@@ -31,8 +32,12 @@ export default function Navbar() {
                     {/* Desktop Navigation */}
                     <div className="hidden lg:flex items-center gap-2">
                         <NavLink to="/" active={isActive("/")} icon={<HomeIcon size={16} />}>{t('home')}</NavLink>
-                        <NavLink to="/dashboard" active={isActive("/dashboard")} icon={<LayoutDashboard size={16} />}>{t('dashboard')}</NavLink>
-                        <NavLink to="/leaderboard" active={isActive("/leaderboard")} icon={<Trophy size={16} />}>Hall of Heroes</NavLink>
+                        {token && (
+                            <>
+                                <NavLink to="/dashboard" active={isActive("/dashboard")} icon={<LayoutDashboard size={16} />}>{t('dashboard')}</NavLink>
+                                <NavLink to="/leaderboard" active={isActive("/leaderboard")} icon={<Trophy size={16} />}>Hall of Heroes</NavLink>
+                            </>
+                        )}
                     </div>
                 </div>
 
@@ -41,12 +46,19 @@ export default function Navbar() {
                         <LanguageSelector />
                     </div>
 
-                    <button
-                        onClick={handleLogout}
-                        className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white text-xs font-black transition-all hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/20 active:scale-95"
-                    >
-                        <LogOut size={14} /> {t('logout')}
-                    </button>
+                    {token ? (
+                        <button
+                            onClick={handleLogout}
+                            className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-slate-900 text-white text-xs font-black transition-all hover:bg-emerald-600 hover:shadow-xl hover:shadow-emerald-500/20 active:scale-95"
+                        >
+                            <LogOut size={14} /> {t('logout')}
+                        </button>
+                    ) : (
+                        <div className="hidden md:flex items-center gap-3">
+                            <Link to="/login" className="px-6 py-2.5 text-xs font-black text-slate-600 hover:text-emerald-600 transition-all uppercase tracking-widest">{t('login')}</Link>
+                            <Link to="/signup" className="px-6 py-2.5 bg-emerald-600 text-white rounded-full text-xs font-black transition-all hover:bg-emerald-700 hover:shadow-xl hover:shadow-emerald-200 active:scale-95 shadow-sm uppercase tracking-widest">{t('signup')}</Link>
+                        </div>
+                    )}
 
                     {/* Mobile Menu Toggle */}
                     <button
@@ -69,15 +81,24 @@ export default function Navbar() {
                     >
                         <div className="p-6 space-y-4">
                             <MobileNavLink to="/" onClick={() => setIsOpen(false)} icon={<HomeIcon size={18} />}>{t('home')}</MobileNavLink>
-                            <MobileNavLink to="/dashboard" onClick={() => setIsOpen(false)} icon={<LayoutDashboard size={18} />}>{t('dashboard')}</MobileNavLink>
-                            <MobileNavLink to="/leaderboard" onClick={() => setIsOpen(false)} icon={<Trophy size={18} />}>Hall of Heroes</MobileNavLink>
-                            <hr className="border-slate-50" />
-                            <div className="flex items-center justify-between p-4">
-                                <LanguageSelector />
-                                <button onClick={handleLogout} className="flex items-center gap-2 text-rose-600 font-black text-xs uppercase tracking-widest">
-                                    <LogOut size={14} /> {t('logout')}
-                                </button>
-                            </div>
+                            {token ? (
+                                <>
+                                    <MobileNavLink to="/dashboard" onClick={() => setIsOpen(false)} icon={<LayoutDashboard size={18} />}>{t('dashboard')}</MobileNavLink>
+                                    <MobileNavLink to="/leaderboard" onClick={() => setIsOpen(false)} icon={<Trophy size={18} />}>Hall of Heroes</MobileNavLink>
+                                    <hr className="border-slate-50" />
+                                    <div className="flex items-center justify-between p-4">
+                                        <LanguageSelector />
+                                        <button onClick={handleLogout} className="flex items-center gap-2 text-rose-600 font-black text-xs uppercase tracking-widest">
+                                            <LogOut size={14} /> {t('logout')}
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <MobileNavLink to="/login" onClick={() => setIsOpen(false)} icon={<LogOut size={18} />}>{t('login')}</MobileNavLink>
+                                    <MobileNavLink to="/signup" onClick={() => setIsOpen(false)} icon={<Trophy size={18} />}>{t('signup')}</MobileNavLink>
+                                </>
+                            )}
                         </div>
                     </motion.div>
                 )}
