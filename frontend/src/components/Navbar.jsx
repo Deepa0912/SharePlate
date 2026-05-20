@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "./LanguageSelector";
-import { LogOut, LayoutDashboard, BarChart3, Home as HomeIcon } from "lucide-react";
+import { LogOut, LayoutDashboard, BarChart3, Home as HomeIcon, Trophy } from "lucide-react";
 
 export default function Navbar() {
     const { t } = useLanguage();
@@ -33,6 +33,9 @@ export default function Navbar() {
                     <NavLink to="/analytics" active={isActive("/analytics")} icon={<BarChart3 className="w-4 h-4" />}>
                         {t('analytics')}
                     </NavLink>
+                    <NavLink to="/leaderboard" active={isActive("/leaderboard")} icon={<Trophy className="w-4 h-4" />}>
+                        Hall of Heroes
+                    </NavLink>
                 </div>
             </div>
 
@@ -55,8 +58,8 @@ function NavLink({ to, children, active, icon }) {
         <Link
             to={to}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-300 ${active
-                    ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
-                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent"
+                ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100"
+                : "text-slate-500 hover:bg-slate-50 hover:text-slate-800 border border-transparent"
                 }`}
         >
             {icon}

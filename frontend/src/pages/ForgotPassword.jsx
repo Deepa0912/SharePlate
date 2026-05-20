@@ -1,24 +1,32 @@
+// src/pages/ForgotPassword.jsx
+// ==========================
+// Premium v2.5.0 Password Recovery: Mission-Critical Security.
+// Modern glassmorphic recovery flow with strategic synergy.
+
 import { useState } from "react";
 import API from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "../components/LanguageSelector";
+import { ShieldAlert, Mail, Lock, Key, Settings, ArrowLeft, ArrowRight, CheckCircle, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const MISSION_BG = "file:///C:/Users/jagadeesh/.gemini/antigravity/brain/acd0790a-d5a0-4f13-a6fb-fa2302f21661/charity_mission_hero_1779297352151.png";
 
 function ForgotPassword() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const [step, setStep] = useState(1); // 1 = Request Code, 2 = Reset Password
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [devCode, setDevCode] = useState(""); // captured from developer sandbox response
+  const [devCode, setDevCode] = useState("");
   const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Dynamic SMTP configurations
   const [smtpUser, setSmtpUser] = useState(localStorage.getItem("shareplate_smtp_user") || "");
   const [smtpPassword, setSmtpPassword] = useState(localStorage.getItem("shareplate_smtp_password") || "");
   const [showSmtpSettings, setShowSmtpSettings] = useState(false);
@@ -30,7 +38,6 @@ function ForgotPassword() {
     setLoading(true);
 
     try {
-      // Persist sender configuration locally
       if (smtpUser) localStorage.setItem("shareplate_smtp_user", smtpUser);
       if (smtpPassword) localStorage.setItem("shareplate_smtp_password", smtpPassword);
 
@@ -41,17 +48,15 @@ function ForgotPassword() {
       });
       if (response.data.email_sent) {
         setEmailSent(true);
-        setSuccess(`Verification code sent to ${email}!`);
+        setSuccess(`Code dispatched to ${email}`);
       } else {
         setEmailSent(false);
-        setSuccess("Verification code generated successfully!");
-        if (response.data.reset_code) {
-          setDevCode(response.data.reset_code);
-        }
+        setSuccess("Strategic code generated.");
+        if (response.data.reset_code) setDevCode(response.data.reset_code);
       }
       setStep(2);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to generate reset code");
+      setError(err.response?.data?.detail || "Displacement failed");
     } finally {
       setLoading(false);
     }
@@ -69,154 +74,155 @@ function ForgotPassword() {
         reset_code: resetCode,
         new_password: newPassword
       });
-      alert("Password reset successful! Please log in with your new password.");
-      navigate("/login");
+      setSuccess("Access restored. Redirecting...");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to reset password");
+      setError(err.response?.data?.detail || "Restoration failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center theme-bg-light-gradient relative">
-      <div className="absolute top-6 right-6">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 font-sans relative overflow-hidden">
+      {/* Background Narrative Blend */}
+      <img src={MISSION_BG} className="absolute inset-0 w-full h-full object-cover opacity-20 blur-sm scale-110" alt="bg" />
+      <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+
+      <div className="absolute top-10 right-10">
         <LanguageSelector />
       </div>
 
-      <div className="bg-white p-8 rounded-2xl shadow-lg border border-slate-100 w-96 border-t-4 theme-border-primary">
-        <h2 className="text-3xl font-bold text-center theme-text-primary mb-2">
-          Reset Password
-        </h2>
-        <p className="text-sm text-slate-500 text-center mb-6">
-          {step === 1 
-            ? "Enter your email to request a reset code" 
-            : "Enter your 6-digit code and new password"}
-        </p>
-
-        {error && (
-          <div className="bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4 border border-red-100">
-            ⚠️ {error}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white border border-slate-100 rounded-[4rem] p-12 md:p-16 shadow-2xl w-full max-w-xl relative z-10"
+      >
+        <div className="space-y-4 mb-12 text-center">
+          <div className="w-20 h-20 bg-emerald-50 rounded-[2rem] flex items-center justify-center text-emerald-600 mx-auto mb-6 shadow-xl shadow-emerald-500/5">
+            <ShieldAlert size={36} />
           </div>
-        )}
-
-        {success && (
-          <div className="bg-emerald-50 text-emerald-800 text-sm p-3 rounded-lg mb-4 border border-emerald-100">
-            ✅ {success}
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none"> Restoring Access </h2>
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-1 w-8 bg-emerald-500 rounded-full"></div>
+            <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.25em]">Strategic Identity Recovery</p>
+            <div className="h-1 w-8 bg-emerald-500 rounded-full"></div>
           </div>
-        )}
+        </div>
 
-        {/* Real Email Sent Info Badge */}
-        {emailSent && step === 2 && (
-          <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg mb-6 border border-blue-200">
-            📧 <strong>Real Email Sent:</strong> A verification code has been sent directly to your email address! Please check your inbox (and spam folder).
-          </div>
-        )}
-
-        {/* Developer Sandbox helper badge */}
-        {!emailSent && devCode && step === 2 && (
-          <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-lg mb-6 border border-amber-200">
-            🛠️ <strong>Sandbox Mode:</strong> Your test reset code is: 
-            <span className="bg-amber-200 px-2 py-1 rounded ml-1 text-sm font-extrabold select-all tracking-wider">
-              {devCode}
-            </span>
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-rose-50 border border-rose-100 text-rose-600 text-xs font-black p-4 rounded-2xl mb-8 flex items-center gap-3">
+              <ShieldAlert size={16} /> {error}
+            </motion.div>
+          )}
+          {success && (
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-black p-4 rounded-2xl mb-8 flex items-center gap-3">
+              <CheckCircle size={16} /> {success}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {step === 1 ? (
-          <form onSubmit={handleRequestCode}>
-            <input
-              type="email"
-              placeholder={t('ph_email')}
-              value={email}
-              className="w-full p-3 border border-slate-200 rounded-lg mb-4 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+          <form onSubmit={handleRequestCode} className="space-y-8">
+            <div className="space-y-2 group">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">
+                <Mail size={12} /> {t('ph_email')}
+              </label>
+              <input
+                type="email"
+                placeholder="agent@shareplate.org"
+                value={email}
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all font-bold text-slate-800"
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
 
-            {/* Collapsible SMTP dynamic configuration panel */}
-            <div className="mt-2 mb-6 text-left">
+            <div className="bg-slate-50 rounded-[2rem] p-6 border border-slate-100">
               <button
                 type="button"
                 onClick={() => setShowSmtpSettings(!showSmtpSettings)}
-                className="text-xs text-slate-500 hover:text-emerald-600 font-semibold flex items-center gap-1 focus:outline-none transition-colors"
+                className="w-full flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-emerald-600 transition-colors"
               >
-                ⚙️ {showSmtpSettings ? "Hide Sender Settings" : "Configure Real Email Sender (SMTP)"}
+                <span className="flex items-center gap-2"><Settings size={14} /> Mission SMTP Gateway</span>
+                <span>{showSmtpSettings ? "−" : "+"}</span>
               </button>
 
-              {showSmtpSettings && (
-                <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-xl animate-fade-in text-left">
-                  <p className="text-xs font-bold text-slate-700 mb-2">Configure Gmail SMTP</p>
-                  
-                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gmail Address</label>
-                  <input
-                    type="email"
-                    placeholder="e.g. sender@gmail.com"
-                    value={smtpUser}
-                    onChange={(e) => setSmtpUser(e.target.value)}
-                    className="w-full p-2 text-xs border border-slate-200 rounded mb-2 focus:ring-1 focus:ring-emerald-500/20 focus:outline-none bg-white"
-                  />
-
-                  <label className="block text-[10px] uppercase font-bold text-slate-400 mb-1">Gmail App Password</label>
-                  <input
-                    type="password"
-                    placeholder="16-character passcode"
-                    value={smtpPassword}
-                    onChange={(e) => setSmtpPassword(e.target.value)}
-                    className="w-full p-2 text-xs border border-slate-200 rounded focus:ring-1 focus:ring-emerald-500/20 focus:outline-none font-mono bg-white"
-                  />
-
-                  <div className="mt-3 p-2 bg-amber-50 rounded border border-amber-100 text-[10px] text-amber-800 leading-relaxed">
-                    💡 <strong>How to get passcode:</strong> Go to Google Account -{">"} Security -{">"} 2-Step Verification -{">"} <strong>App Passwords</strong> (at the bottom) -{">"} Select 'Other' and name it 'SharePlate' -{">"} Copy the generated 16-letter code here!
-                  </div>
-                </div>
-              )}
+              <AnimatePresence>
+                {showSmtpSettings && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="pt-6 space-y-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Gmail Identity</label>
+                        <input type="email" placeholder="sender@gmail.com" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} className="w-full p-3 text-xs bg-white border border-slate-100 rounded-xl" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">App Passcode</label>
+                        <input type="password" placeholder="16-letter secure key" value={smtpPassword} onChange={(e) => setSmtpPassword(e.target.value)} className="w-full p-3 text-xs bg-white border border-slate-100 rounded-xl font-mono" />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full theme-btn-primary py-3 rounded-lg font-semibold shadow-sm hover:shadow"
-            >
-              {loading ? "Requesting..." : "Send Reset Code"}
+            <button type="submit" disabled={loading} className="w-full py-5 bg-slate-900 hover:bg-emerald-600 text-white rounded-[2rem] font-black text-lg shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3">
+              {loading ? "Dispatching..." : "Send Restoration Code"} <ArrowRight size={20} />
             </button>
           </form>
         ) : (
-          <form onSubmit={handleResetPassword}>
-            <input
-              type="text"
-              placeholder="Enter 6-digit code"
-              value={resetCode}
-              className="w-full p-3 border border-slate-200 rounded-lg mb-4 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all font-mono text-center tracking-widest text-lg font-bold"
-              onChange={(e) => setResetCode(e.target.value)}
-              required
-            />
+          <form onSubmit={handleResetPassword} className="space-y-8">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">
+                <Key size={12} /> Strategic Code
+              </label>
+              <input
+                type="text"
+                placeholder="000 000"
+                value={resetCode}
+                className="w-full px-6 py-5 bg-emerald-50 border border-emerald-100 rounded-[1.5rem] focus:outline-none focus:ring-4 focus:ring-emerald-500/10 transition-all font-black text-2xl text-center tracking-[0.5em] text-emerald-700"
+                onChange={(e) => setResetCode(e.target.value)}
+                required
+              />
+            </div>
 
-            <input
-              type="password"
-              placeholder="Enter new password"
-              value={newPassword}
-              className="w-full p-3 border border-slate-200 rounded-lg mb-6 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-all"
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">
+                <Lock size={12} /> New Mission Key
+              </label>
+              <input
+                type="password"
+                placeholder="••••••••"
+                value={newPassword}
+                className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all font-bold text-slate-800"
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full theme-btn-primary py-3 rounded-lg font-semibold shadow-sm hover:shadow"
-            >
-              {loading ? "Resetting..." : "Update Password"}
+            {devCode && (
+              <div className="p-6 bg-amber-50 border border-amber-100 rounded-3xl flex items-start gap-4">
+                <Info className="text-amber-500 shrink-0" size={18} />
+                <div>
+                  <div className="text-[10px] font-black uppercase text-amber-600 tracking-widest mb-1">Sandbox Debug Key</div>
+                  <div className="text-sm font-black text-slate-800 font-mono tracking-widest">{devCode}</div>
+                </div>
+              </div>
+            )}
+
+            <button type="submit" disabled={loading} className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[2rem] font-black text-lg shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3">
+              {loading ? "Restoring..." : "Execute Restoration"} <ArrowRight size={20} />
             </button>
           </form>
         )}
 
-        <div className="mt-6 text-center text-sm">
-          <Link to="/login" className="theme-text-primary hover:underline font-semibold">
-            ← Back to Login
+        <footer className="text-center pt-12">
+          <Link to="/login" className="inline-flex items-center gap-2 text-sm font-black text-slate-400 hover:text-emerald-600 transition-colors group">
+            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> {t('back_to_login') || "Return to Mission Control"}
           </Link>
-        </div>
-      </div>
+        </footer>
+      </motion.div>
     </div>
   );
 }

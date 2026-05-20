@@ -272,7 +272,7 @@ def home():
         
     return {
         "message": "Welcome to SharePlate: Eradicating Hunger in India",
-        "mission": "Recovering surplus food from weddings, hotels, and restaurants using AI (Version 2.4.0)",
+        "mission": "Recovering surplus food from weddings, hotels, and restaurants using AI (Version 2.4.1)",
         "db_status": db_status
     }
 
@@ -888,6 +888,26 @@ def get_analytics():
         raise HTTPException(status_code=500, detail=f"Failed to load analytics: {exc}")
 
 
+@app.get("/leaderboard")
+def get_leaderboard():
+    """Get top donors ranked by karma."""
+    try:
+        donations = list(donations_collection.find())
+        return build_leaderboard(donations)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/my-karma/{email}")
+def get_user_karma(email: str):
+    """Get karma breakdown for the specific user."""
+    try:
+        donations = list(donations_collection.find())
+        return compute_user_karma(email, donations)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 # ===========================================================================
 # AI CHATBOT API
 # ===========================================================================
@@ -905,7 +925,12 @@ def chat_endpoint(req: ChatRequest):
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+    return {
+        "status": "ok", 
+        "version": "2.5.0",
+        "timestamp": datetime.utcnow().isoformat(),
+        "mission": "Zero Hunger"
+    }
 
 if __name__ == "__main__":
     import uvicorn

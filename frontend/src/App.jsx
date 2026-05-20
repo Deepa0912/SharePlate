@@ -7,6 +7,7 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
+import Leaderboard from "./pages/Leaderboard";
 import Chatbot from "./components/Chatbot";
 import { LanguageProvider } from "./context/LanguageContext";
 
@@ -39,6 +40,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
               </ProtectedRoute>
             }
           />

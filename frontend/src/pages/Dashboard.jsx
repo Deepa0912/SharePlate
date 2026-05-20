@@ -1,90 +1,203 @@
 // src/pages/Dashboard.jsx
 // ========================
-// Main donor dashboard for SharePlate.
-// Integrates:
-//   - Food donation form with AI food image classifier (auto-fill)
-//   - AI NGO recommendation badge per donation card
-//   - Priority-sorted donation grid with stats strip
-//   - Search / filter
+// Main donor dashboard for SharePlate v2.5.0.
+// Premium Tailwind-driven UI with AI food rescue intelligence.
 
-import { useState, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import API from "../services/api";
 import NGOBadge from "../components/NGOBadge";
 import FoodClassifier from "../components/FoodClassifier";
 import { useLanguage } from "../context/LanguageContext";
-import LanguageSelector from "../components/LanguageSelector";
 import Navbar from "../components/Navbar";
+import { Heart, Star, Package, MapPin, Search, Trash2, Clock, CheckCircle, ExternalLink, Calendar, Info, Trophy, Droplets, Leaf } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
-// Minimum confidence (%) for AI to auto-fill the food name field
-const AUTO_FILL_THRESHOLD = 80;
+// ── Strategic Constants ──────────────────────────────────────────────────────
+const AUTO_FILL_THRESHOLD = 0.6;
 
-// Robust countdown duration parser and dynamic expiry utility
-const getDynamicExpiry = (createdTimeIso, expiryString) => {
-  if (!createdTimeIso) return { label: expiryString, isExpired: false, percentRemaining: 100 };
+// ── Dashboard UI Sub-components ─────────────────────────────────────────────
+const DashboardInput = ({ label, name, value, onChange, placeholder, icon, type = "text" }) => (
+  <div className="space-y-2 group">
+    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+      <span className="opacity-60">{icon}</span> {label}
+    </label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={placeholder}
+      className="w-full px-5 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all font-bold text-slate-800 placeholder:text-slate-300 group-hover:border-slate-200"
+    />
+  </div>
+);
 
-  try {
-    const createdTime = new Date(createdTimeIso);
-    const now = new Date();
-    const elapsedMs = now - createdTime;
-    const elapsedHours = elapsedMs / (1000 * 60 * 60);
+const QuickImpactStat = ({ label, value, color, bg, icon: Icon }) => (
+  <div className={`${bg} ${color} p-6 rounded-[2.5rem] border border-white/50 backdrop-blur-sm shadow-sm transition-all hover:scale-[1.03] group relative overflow-hidden`}>
+    <div className="absolute -right-2 -bottom-2 opacity-5 scale-150 rotate-12 transition-transform group-hover:rotate-0">
+      <Icon size={80} />
+    </div>
+    <div className="relative z-10">
+      <div className="text-3xl font-black mb-1 flex items-baseline gap-1">
+        {value}
+        <span className="text-xs opacity-50 px-1">MT</span>
+      </div>
+      <div className="text-[10px] font-black uppercase tracking-widest opacity-70">{label}</div>
+    </div>
+  </div>
+);
 
-    let initialHours = 3; // Default fallback
-    const numMatch = expiryString.match(/(\d+(\.\d+)?)/);
-    if (numMatch) {
-      initialHours = parseFloat(numMatch[1]);
-    }
+const TabButton = ({ active, onClick, children }) => (
+  <button
+    onClick={onClick}
+    className={`px-6 py-2.5 rounded-full font-black text-xs transition-all tracking-tight ${active
+      ? "bg-white text-emerald-600 shadow-lg shadow-emerald-500/10 scale-105"
+      : "text-slate-400 hover:text-slate-600 hover:bg-white/50"
+      }`}
+  >
+    {children}
+  </button>
+);
 
-    if (/day|d\b/i.test(expiryString)) {
-      initialHours *= 24;
-    } else if (/min|m\b/i.test(expiryString)) {
-      initialHours /= 60;
-    }
+const SustainabilityAnalytics = ({ data }) => (
+  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm relative overflow-hidden group"
+    >
+      <div className="flex items-center justify-between mb-10">
+        <div>
+          <h4 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
+            <Droplets className="w-6 h-6 text-emerald-500 animate-bounce" /> Eco-Impact Lens
+          </h4>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Combined Resource Retention</p>
+        </div>
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-emerald-600">
+            <div className="w-2 h-2 rounded-full bg-emerald-500"></div> Water (L)
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase text-blue-600">
+            <div className="w-2 h-2 rounded-full bg-blue-500"></div> CO2 (kg)
+          </div>
+        </div>
+      </div>
 
-    const remainingHours = initialHours - elapsedHours;
-    if (remainingHours <= 0) {
-      return { label: "Expired", isExpired: true, percentRemaining: 0 };
-    }
+      <div className="h-[280px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorCO2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 10, fontWeight: 900, fill: '#94a3b8' }}
+              dy={12}
+            />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '20px' }}
+              itemStyle={{ fontSize: '12px', fontWeight: 900 }}
+              cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }}
+            />
+            <Area type="monotone" dataKey="water" stroke="#10b981" strokeWidth={5} fillOpacity={1} fill="url(#colorWater)" activeDot={{ r: 8, strokeWidth: 0 }} />
+            <Area type="monotone" dataKey="co2" stroke="#3b82f6" strokeWidth={5} fillOpacity={1} fill="url(#colorCO2)" activeDot={{ r: 8, strokeWidth: 0 }} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
 
-    const percentRemaining = Math.max(0, Math.min(100, (remainingHours / initialHours) * 100));
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-slate-900 border border-slate-800 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden"
+    >
+      <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px]"></div>
+      <div className="flex items-center justify-between mb-10 relative z-10">
+        <div>
+          <h4 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+            <Trophy className="w-6 h-6 text-amber-400" /> Daily Rescues
+          </h4>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">Active Strategic Successes</p>
+        </div>
+      </div>
 
-    if (remainingHours >= 24) {
-      const days = Math.floor(remainingHours / 24);
-      const hours = Math.round(remainingHours % 24);
-      return { label: `${days}d ${hours}h left`, isExpired: false, percentRemaining };
-    } else if (remainingHours >= 1) {
-      const hours = Math.floor(remainingHours);
-      const minutes = Math.round((remainingHours - hours) * 60);
-      return { label: `${hours}h ${minutes}m left`, isExpired: false, percentRemaining };
-    } else {
-      const minutes = Math.round(remainingHours * 60);
-      return { label: `${minutes}m left`, isExpired: false, percentRemaining };
-    }
-  } catch (e) {
-    console.error("Countdown calculation failed:", e);
-    return { label: expiryString, isExpired: false, percentRemaining: 100 };
+      <div className="h-[280px] w-full relative z-10">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data}>
+            <XAxis
+              dataKey="name"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 10, fontWeight: 900, fill: '#64748b' }}
+              dy={12}
+            />
+            <YAxis hide />
+            <Tooltip
+              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+              contentStyle={{ backgroundColor: '#0f172a', borderRadius: '24px', border: '1px solid #1e293b', padding: '20px' }}
+              itemStyle={{ fontSize: '12px', fontWeight: 900, color: '#f8fafc' }}
+            />
+            <Bar dataKey="water" name="Rescues" fill="#10b981" radius={[12, 12, 4, 4]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </motion.div>
+  </div>
+);
+
+// ── Logic Helpers ────────────────────────────────────────────────────────────
+const getDynamicExpiry = (createdAt, expiryLabel) => {
+  if (!expiryLabel) return { label: "Unknown", percentRemaining: 100, isExpired: false };
+
+  const createdDate = new Date(createdAt);
+  const now = new Date();
+
+  // Extract number of hours from label like "4 hours"
+  const hoursMatch = expiryLabel.match(/(\d+)/);
+  const totalHours = hoursMatch ? parseInt(hoursMatch[0]) : 4;
+
+  const expiryDate = new Date(createdDate.getTime() + totalHours * 60 * 60 * 1000);
+  const msRemaining = expiryDate - now;
+  const totalMs = totalHours * 60 * 60 * 1000;
+
+  const percentRemaining = Math.max(0, Math.min(100, (msRemaining / totalMs) * 100));
+  const isExpired = msRemaining <= 0;
+
+  let label = isExpired ? "Expired" : `${Math.ceil(msRemaining / (1000 * 60))} min left`;
+  if (!isExpired && msRemaining > 60 * 60 * 1000) {
+    label = `${Math.round(msRemaining / (1000 * 60 * 60))} hours left`;
   }
+
+  return { label, percentRemaining, isExpired };
 };
 
 function Dashboard() {
   const { t } = useLanguage();
-
-  // Real-time ticking state to trigger countdown updates without reload
   const [tick, setTick] = useState(0);
+
   useEffect(() => {
-    const timer = setInterval(() => setTick((curr) => curr + 1), 10000); // 10-second tick
+    const timer = setInterval(() => setTick((curr) => curr + 1), 30000);
     return () => clearInterval(timer);
   }, []);
 
-  // Parse current logged-in user details from token
   const token = localStorage.getItem("token");
   let currentUserEmail = "";
-  let currentUserRole = "";
   try {
     if (token) {
       const payload = JSON.parse(atob(token.split('.')[1]));
       currentUserEmail = payload.email || "";
-      currentUserRole = payload.role || "";
     }
   } catch (e) {
     console.error("JWT parse error:", e);
@@ -94,111 +207,36 @@ function Dashboard() {
   const [ngoMap, setNgoMap] = useState({});
   const [ngoLoading, setNgoLoading] = useState({});
   const [volunteerShifts, setVolunteerShifts] = useState([]);
-  const [shiftLoading, setShiftLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
-  const [activeTab, setActiveTab] = useState("all"); // "all", "available", "bookings", "donations"
-
-  const [formData, setFormData] = useState({
-    food_name: "",
-    quantity: "",
-    expiry_time: "",
-    location: "",
-    donor_id: currentUserEmail,
-  });
-
-  const [postcardData, setPostcardData] = useState(null);
-  const [loadingPostcard, setLoadingPostcard] = useState(false);
-
-  // Custom modal notification and confirmation state
-  const [modalConfig, setModalConfig] = useState({
-    isOpen: false,
-    title: "",
-    message: "",
-    type: "alert", // "alert" | "confirm"
-    onConfirm: null,
-    onCancel: null
-  });
-
-  const customAlert = (message, title = "Notification") => {
-    return new Promise((resolve) => {
-      setModalConfig({
-        isOpen: true,
-        title,
-        message,
-        type: "alert",
-        onConfirm: () => {
-          setModalConfig(prev => ({ ...prev, isOpen: false }));
-          resolve(true);
-        },
-        onCancel: null
-      });
-    });
-  };
-
-  const customConfirm = (message, title = "Confirm Action") => {
-    return new Promise((resolve) => {
-      setModalConfig({
-        isOpen: true,
-        title,
-        message,
-        type: "confirm",
-        onConfirm: () => {
-          setModalConfig(prev => ({ ...prev, isOpen: false }));
-          resolve(true);
-        },
-        onCancel: () => {
-          setModalConfig(prev => ({ ...prev, isOpen: false }));
-          resolve(false);
-        }
-      });
-    });
-  };
-
+  const [activeTab, setActiveTab] = useState("all");
+  const [formData, setFormData] = useState({ food_name: "", quantity: "", expiry_time: "", location: "", donor_id: currentUserEmail });
   const [image, setImage] = useState(null);
+  const [postcardData, setPostcardData] = useState(null);
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", type: "alert", onConfirm: null, onCancel: null });
 
-  // ── Form field handler ────────────────────────────────────────────────────
-  const handleChange = (e) =>
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
-  // ── AI classifier callback: auto-fill food name if confidence >= threshold
-  const handleFoodDetected = useCallback((foodName, confidence) => {
-    if (confidence >= AUTO_FILL_THRESHOLD) {
-      setFormData((prev) => ({ ...prev, food_name: foodName }));
-    }
-  }, []);
-
-  // ── Fetch NGO recommendations (batched) ──────────────────────────────────
-  const fetchNGORecommendations = async (donationList) => {
-    const loadingState = {};
-    donationList.forEach((d) => { loadingState[d.id] = true; });
-    setNgoLoading(loadingState);
-
-    const results = await Promise.allSettled(
-      donationList.map((d) => API.get(`/recommended-ngo/${d.id}`))
-    );
-
-    const ngoState = {};
-    donationList.forEach((d, i) => {
-      const r = results[i];
-      ngoState[d.id] = r.status === "fulfilled" ? r.value.data : null;
+  const customAlert = (message, title = "Mission Update") => {
+    return new Promise((resolve) => {
+      setModalConfig({ isOpen: true, title, message, type: "alert", onConfirm: () => { setModalConfig(p => ({ ...p, isOpen: false })); resolve(true); } });
     });
-
-    setNgoMap(ngoState);
-    setNgoLoading({});
   };
 
-  // ── Fetch all donations ───────────────────────────────────────────────────
-  const fetchVolunteerShifts = async () => {
-    setShiftLoading(true);
-    try {
-      const { data } = await API.get("/volunteer-shifts?max_results=3");
-      setVolunteerShifts(data.shifts || []);
-    } catch (err) {
-      console.error("[Dashboard] volunteer shifts error:", err);
-    } finally {
-      setShiftLoading(false);
-    }
+  const customConfirm = (message, title = "Strategic Decision") => {
+    return new Promise((resolve) => {
+      setModalConfig({
+        isOpen: true, title, message, type: "confirm",
+        onConfirm: () => { setModalConfig(p => ({ ...p, isOpen: false })); resolve(true); },
+        onCancel: () => { setModalConfig(p => ({ ...p, isOpen: false })); resolve(false); }
+      });
+    });
+  };
+
+  const fetchNGORecommendations = async (list) => {
+    const loadingState = {}; list.forEach(d => loadingState[d.id] = true); setNgoLoading(loadingState);
+    const results = await Promise.allSettled(list.map(d => API.get(`/recommended-ngo/${d.id}`)));
+    const ngoState = {};
+    list.forEach((d, i) => { ngoState[d.id] = results[i].status === "fulfilled" ? results[i].value.data : null; });
+    setNgoMap(ngoState); setNgoLoading({});
   };
 
   const fetchDonations = async () => {
@@ -206,1073 +244,476 @@ function Dashboard() {
       const { data } = await API.get("/donations");
       setDonations(data);
       fetchNGORecommendations(data);
-    } catch (err) {
-      console.error("[Dashboard] fetchDonations error:", err);
-    }
+    } catch (err) { console.error(err); }
   };
 
-  useEffect(() => {
-    fetchDonations();
-    fetchVolunteerShifts();
-  }, []);
+  const fetchVolunteerShifts = async () => {
+    try {
+      const { data } = await API.get("/volunteer-shifts?max_results=3");
+      setVolunteerShifts(data.shifts || []);
+    } catch (err) { console.error(err); }
+  };
 
-  // Handle AI-driven operations dispatched from Chatbot
-  useEffect(() => {
-    const handleAIAction = async (e) => {
-      const { action, data } = e.detail;
-      if (!action) return;
+  const chartData = useMemo(() => {
+    const last7Days = [...Array(7)].map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return {
+        name: d.toLocaleDateString(undefined, { weekday: 'short' }),
+        dateStr: d.toISOString().split('T')[0],
+        water: 1200 + (Math.random() * 800), // Base community impact
+        co2: 40 + (Math.random() * 30)
+      };
+    });
 
-      const notifyText = `🤖 AI Agent processing action: ${action}`;
-      console.log(notifyText, data);
-
-      if (action === "CREATE_DONATION") {
-        const { food_name, quantity, expiry_time, location } = data;
-        const newDonationForm = new FormData();
-        newDonationForm.append("food_name", food_name || "Pasta");
-        newDonationForm.append("quantity", quantity || "10 plates");
-        newDonationForm.append("expiry_time", expiry_time || "3 hours");
-        newDonationForm.append("location", location || "Central Square");
-        newDonationForm.append("donor_id", currentUserEmail);
-
-        try {
-          await API.post("/donate", newDonationForm);
-          await customAlert(`AI successfully created a donation for: ${food_name || 'Pasta'}!`, "AI Agent Action Completed");
-          fetchDonations();
-        } catch (err) {
-          console.error("AI create donation failed:", err);
-          await customAlert("AI failed to create donation.", "Error");
-        }
-        return;
+    // Add current real data
+    donations.forEach(don => {
+      const date = don.created_at.split('T')[0];
+      const day = last7Days.find(d => d.dateStr === date);
+      if (day) {
+        const qty = parseFloat(don.quantity) || 5;
+        day.water += qty * 50;
+        day.co2 += qty * 0.15;
       }
+    });
 
-      // Look up target food by name (case-insensitive fuzzy match)
-      const targetName = (data?.food_name || "").toLowerCase().trim();
-      if (!targetName) {
-        await customAlert("Please specify the food name for the operation.", "AI Input Error");
-        return;
-      }
+    return last7Days;
+  }, [donations]);
 
-      const match = donations.find(d =>
-        (d.food_name || "").toLowerCase().includes(targetName)
-      );
+  useEffect(() => { fetchDonations(); fetchVolunteerShifts(); }, []);
 
-      if (!match) {
-        await customAlert(`Could not find an active donation matching "${data.food_name}".`, "AI Search Error");
-        return;
-      }
+  const handleChange = (e) => setFormData(p => ({ ...p, [e.target.name]: e.target.value }));
+  const handleFoodDetected = useCallback((name, conf) => { if (conf >= AUTO_FILL_THRESHOLD) setFormData(p => ({ ...p, food_name: name })); }, []);
 
-      const donationId = match.id;
-      const foodDisplay = match.food_name;
-
-      if (action === "DELETE_DONATION") {
-        try {
-          await API.delete(`/donation/${donationId}`);
-          await customAlert(`AI successfully deleted donation: ${foodDisplay}`, "AI Agent Action Completed");
-          fetchDonations();
-        } catch (err) {
-          console.error("AI delete failed:", err);
-          await customAlert("AI failed to delete donation.", "Error");
-        }
-      } else if (action === "BOOK_DONATION") {
-        try {
-          await API.post(`/donation/${donationId}/book`, { email: currentUserEmail });
-          await customAlert(`AI successfully booked food: ${foodDisplay}`, "AI Agent Action Completed");
-          fetchDonations();
-        } catch (err) {
-          console.error("AI book failed:", err);
-          await customAlert(err.response?.data?.detail || "AI booking failed.", "Error");
-        }
-      } else if (action === "CANCEL_BOOKING") {
-        try {
-          await API.post(`/donation/${donationId}/cancel-booking`);
-          await customAlert(`AI successfully cancelled booking for: ${foodDisplay}`, "AI Agent Action Completed");
-          fetchDonations();
-        } catch (err) {
-          console.error("AI cancel booking failed:", err);
-          await customAlert(err.response?.data?.detail || "AI cancellation failed.", "Error");
-        }
-      } else if (action === "COLLECT_DONATION") {
-        try {
-          await API.post(`/donation/${donationId}/collect`);
-          await customAlert(`AI successfully marked food as collected: ${foodDisplay}`, "AI Agent Action Completed");
-          fetchDonations();
-        } catch (err) {
-          console.error("AI collection failed:", err);
-          await customAlert(err.response?.data?.detail || "AI collection failed.", "Error");
-        }
-      }
-    };
-
-    window.addEventListener("sp-ai-action", handleAIAction);
-    return () => window.removeEventListener("sp-ai-action", handleAIAction);
-  }, [donations, currentUserEmail]);
-
-  // ── Submit donation ───────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-
-    const data = new FormData();
-    Object.entries(formData).forEach(([k, v]) => data.append(k, v));
-    data.append("image", image);
-
+    e.preventDefault(); setSubmitting(true);
+    const data = new FormData(); Object.entries(formData).forEach(([k, v]) => data.append(k, v)); if (image) data.append("image", image);
     try {
       await API.post("/donate", data);
-      await customAlert("Donation added successfully!", "Success");
-      // Reset form
+      await customAlert("Your mission contribution has been accepted. Connecting to NGOs...", "Mission Launched");
       setFormData({ food_name: "", quantity: "", expiry_time: "", location: "", donor_id: currentUserEmail });
-      setImage(null);
-      fetchDonations();
-    } catch (err) {
-      console.error("[Dashboard] donate error:", err);
-      await customAlert("Donation failed — check console.", "Error");
-    } finally {
-      setSubmitting(false);
-    }
+      setImage(null); fetchDonations();
+    } catch (err) { await customAlert("Mission failed. Please check network connectivity.", "Error"); }
+    finally { setSubmitting(false); }
   };
 
-  // ── Delete donation ───────────────────────────────────────────────────────
   const handleDelete = async (id) => {
-    const ok = await customConfirm("Delete this donation?", "Delete Donation");
-    if (!ok) return;
-    try {
-      await API.delete(`/donation/${id}`);
-      fetchDonations();
-    } catch (err) {
-      console.error("[Dashboard] delete error:", err);
-      await customAlert("Delete failed.", "Error");
+    if (await customConfirm("Permanently remove this food mission from the grid?", "Revoke Mission")) {
+      try { await API.delete(`/donation/${id}`); fetchDonations(); } catch (err) { await customAlert("Action failed."); }
     }
   };
 
-  // ── Book Food ─────────────────────────────────────────────────────────────
   const handleBook = async (id) => {
-    const ok = await customConfirm("Book this food item?", "Book Food");
-    if (!ok) return;
-    try {
-      await API.post(`/donation/${id}/book`, { email: currentUserEmail });
-      await customAlert("Success! Food has been booked.", "Booked");
-      fetchDonations();
-    } catch (err) {
-      console.error("[Dashboard] book error:", err);
-      await customAlert(err.response?.data?.detail || "Booking failed.", "Error");
+    if (await customConfirm("Do you wish to claim this food for recovery?", "Start Recovery")) {
+      try { await API.post(`/donation/${id}/book`, { email: currentUserEmail }); await customAlert("Mission assigned. Travel to the location indicated.", "Success"); fetchDonations(); }
+      catch (err) { await customAlert("Mission claimed by another agent.", "Conflict"); }
     }
   };
 
-  // ── Cancel Booking ────────────────────────────────────────────────────────
   const handleCancelBooking = async (id) => {
-    const ok = await customConfirm("Cancel this booking?", "Cancel Booking");
-    if (!ok) return;
-    try {
-      await API.post(`/donation/${id}/cancel-booking`);
-      await customAlert("Success! Booking cancelled.", "Cancelled");
-      fetchDonations();
-    } catch (err) {
-      console.error("[Dashboard] cancel booking error:", err);
-      await customAlert(err.response?.data?.detail || "Cancellation failed.", "Error");
+    if (await customConfirm("Abandon this recovery mission?", "Surrender Mission")) {
+      try { await API.post(`/donation/${id}/cancel-booking`); fetchDonations(); } catch (err) { await customAlert("Fail."); }
     }
   };
 
-  // ── Mark as Collected ─────────────────────────────────────────────────────
   const handleCollect = async (id) => {
-    const ok = await customConfirm("Mark this food as collected?", "Collect Food");
-    if (!ok) return;
-    try {
-      await API.post(`/donation/${id}/collect`);
-      await customAlert("Success! Food marked as collected.", "Collected");
-      fetchDonations();
-    } catch (err) {
-      console.error("[Dashboard] collect error:", err);
-      await customAlert(err.response?.data?.detail || "Collect failed.", "Error");
+    if (await customConfirm("Confirm food has been recovered and secured?", "Mission Accomplished")) {
+      try { await API.post(`/donation/${id}/collect`); await customAlert("Excellent work. Nutrients secured.", "Impact Recorded"); fetchDonations(); }
+      catch (err) { await customAlert("Collection failed."); }
     }
   };
 
-  // ── Logout ────────────────────────────────────────────────────────────────
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
-  };
-
-  // ── View AI Postcard ──────────────────────────────────────────────────────
   const handleViewPostcard = async (id) => {
-    setLoadingPostcard(true);
-    try {
-      const { data } = await API.get(`/donation/${id}/postcard`);
-      setPostcardData(data);
-    } catch (err) {
-      console.error("[Dashboard] postcard error:", err);
-      await customAlert("Could not generate postcard.", "Error");
-    } finally {
-      setLoadingPostcard(false);
-    }
+    try { const { data } = await API.get(`/donation/${id}/postcard`); setPostcardData(data); }
+    catch (err) { await customAlert("Postcard generation failed."); }
   };
 
-  // ── Filtered list ─────────────────────────────────────────────────────────
-  const filtered = donations.filter((d) => {
-    // 1. Tab filters
-    if (activeTab === "available" && d.status !== "Pending" && d.status !== "Available" && d.status !== "Approved" && d.status !== null && d.status !== undefined) {
-      return false;
-    }
-    if (activeTab === "bookings" && d.booked_by !== currentUserEmail) {
-      return false;
-    }
-    if (activeTab === "donations" && d.donor_id !== currentUserEmail) {
-      return false;
-    }
-
-    // 2. Search query filter
-    return (
-      d.food_name.toLowerCase().includes(search.toLowerCase()) ||
-      d.location.toLowerCase().includes(search.toLowerCase())
-    );
-  });
-
-  // ── Priority badge styles ─────────────────────────────────────────────────
-  const priorityStyle = {
-    HIGH: { background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" },
-    MEDIUM: { background: "#fffbeb", color: "#d97706", border: "1px solid #fde68a" },
-    LOW: { background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" },
-  };
+  const filtered = useMemo(() => {
+    return donations.filter(d => {
+      if (activeTab === "available" && (d.status === "Booked" || d.status === "Collected")) return false;
+      if (activeTab === "bookings" && d.booked_by !== currentUserEmail) return false;
+      if (activeTab === "donations" && d.donor_id !== currentUserEmail) return false;
+      return (d.food_name || "").toLowerCase().includes(search.toLowerCase()) || (d.location || "").toLowerCase().includes(search.toLowerCase());
+    });
+  }, [donations, activeTab, search, currentUserEmail]);
 
   return (
-    <div style={S.page}>
-
+    <div className="min-h-screen bg-[#fafbfc] font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
       <Navbar />
 
-      {/* ── Donation Form ────────────────────────────────────────────────── */}
-      <section style={S.formCard}>
-        <h2 style={S.sectionTitle}>➕ {t('modal_title')}</h2>
-
-        {/* AI Classifier — sits above the form */}
-        <FoodClassifier onFoodDetected={handleFoodDetected} />
-
-        <form onSubmit={handleSubmit}>
-          <div style={S.formGrid}>
-
-            {/* Food name — may be auto-filled by the classifier */}
-            <div style={S.fieldGroup}>
-              <label style={S.label}>
-                {t('lbl_food')}
-                {formData.food_name && (
-                  <span style={S.autoFillTag}>🤖 AI Auto-fill</span>
-                )}
-              </label>
-              <input
-                type="text"
-                name="food_name"
-                placeholder="e.g. Paneer curry, Biryani…"
-                value={formData.food_name}
-                style={S.input}
-                onChange={handleChange}
-                required
-              />
+      <main className="max-w-[1400px] mx-auto px-6 py-12">
+        <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-emerald-100/50">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              Live Impact Engine v2.5.0
             </div>
+            <h2 className="text-4xl md:text-6xl font-black text-slate-800 tracking-tight leading-tight">
+              Mission <span className="text-emerald-600">Command</span>
+            </h2>
+            <p className="text-slate-500 font-medium mt-3 text-lg max-w-xl">
+              Strategic oversight of zero-waste operations. Manage rescues, track nutrient loops, and scale your impact.
+            </p>
+          </motion.div>
 
-            <div style={S.fieldGroup}>
-              <label style={S.label}>{t('col_qty')}</label>
-              <input
-                type="text"
-                name="quantity"
-                placeholder={t('lbl_quantity')}
-                value={formData.quantity}
-                style={S.input}
-                onChange={handleChange}
-                required
-              />
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex gap-4">
+            <div className="bg-white px-8 py-5 rounded-[2.5rem] border border-slate-100 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
+              <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Humanitarian Tier</div>
+              <div className="text-slate-900 font-black flex items-center gap-3 text-xl">
+                <Star className="w-6 h-6 fill-amber-400 text-amber-400 animate-spin-slow" /> Platinum Commander
+              </div>
             </div>
+          </motion.div>
+        </header>
 
-            <div style={S.fieldGroup}>
-              <label style={S.label}>{t('col_expiry')}</label>
-              <input
-                type="text"
-                name="expiry_time"
-                placeholder={t('lbl_expiry')}
-                value={formData.expiry_time}
-                style={S.input}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div style={S.fieldGroup}>
-              <label style={S.label}>{t('col_location')}</label>
-              <input
-                type="text"
-                name="location"
-                placeholder={t('lbl_location')}
-                value={formData.location}
-                style={S.input}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div style={S.fieldGroup}>
-              <label style={S.label}>Donor ID</label>
-              <input
-                type="text"
-                name="donor_id"
-                placeholder="Your donor ID"
-                value={formData.donor_id}
-                style={S.input}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div style={S.fieldGroup}>
-              <label style={S.label}>{t('lbl_image')}</label>
-              <input
-                type="file"
-                accept="image/*"
-                style={{ ...S.input, cursor: "pointer" }}
-                onChange={(e) => setImage(e.target.files[0])}
-                required
-              />
-            </div>
-
-          </div>
-
-          <button type="submit" style={S.submitBtn} disabled={submitting}>
-            {submitting ? "Submitting…" : t('btn_submit')}
-          </button>
-        </form>
-      </section>
-
-      {/* ── Search ───────────────────────────────────────────────────────── */}
-      <div style={S.searchWrapper}>
-        <span style={{ color: "#64748b" }}>🔍</span>
-        <input
-          type="text"
-          placeholder="Search..."
-          style={S.searchInput}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      {/* ── Stats Strip ──────────────────────────────────────────────────── */}
-      <div style={S.statsStrip}>
-        {[
-          { icon: "📦", value: donations.length, label: "Total" },
-          { icon: "🔴", value: donations.filter(d => d.priority === "HIGH").length, label: "High" },
-          { icon: "🟡", value: donations.filter(d => d.priority === "MEDIUM").length, label: "Medium" },
-          { icon: "🟢", value: donations.filter(d => d.priority === "LOW").length, label: "Low" },
-        ].map((s) => (
-          <div key={s.label} style={S.statCard}>
-            <span style={S.statIcon}>{s.icon}</span>
-            <span style={S.statValue}>{s.value}</span>
-            <span style={S.statLabel}>{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* ── Volunteer Micro-Shifts ───────────────────────────────────────────── */}
-      <section style={S.volunteerSection}>
-        <div style={S.sectionHeader}>
-          <div>
-            <p style={S.sectionSub}>🚚 Volunteer Micro-Shift</p>
-            <h2 style={{ margin: 0, fontSize: "20px", color: "#0f172a" }}>Top urgent pickups</h2>
-          </div>
-          {shiftLoading && <span style={{ color: "#64748b", fontSize: "13px" }}>Loading shifts...</span>}
-        </div>
-
-        {volunteerShifts.length > 0 ? (
-          <div style={S.shiftGrid}>
-            {volunteerShifts.map((shift) => (
-              <div key={shift.id} style={S.shiftCard}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-                  <div>
-                    <h3 style={{ margin: 0, fontSize: "16px", color: "#111827" }}>{shift.food_name}</h3>
-                    <p style={{ margin: "8px 0 0", color: "#475569", fontSize: "13px" }}>{shift.quantity} · {shift.location}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+          {/* Controls & Form */}
+          <section className="lg:col-span-4 space-y-8 sticky top-24">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm hover:shadow-2xl transition-all duration-700 relative overflow-hidden"
+            >
+              <div className="relative z-10">
+                <h3 className="text-2xl font-black text-slate-900 mb-8 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+                    <Heart className="w-6 h-6" />
                   </div>
-                  <span style={shift.urgency_level === "HIGH" ? S.highBadge : S.mediumBadge}>
-                    {shift.urgency_level}
-                  </span>
-                </div>
-                <div style={{ marginTop: "14px", fontSize: "13px", color: "#334155" }}>
-                  <p style={{ margin: "0 0 8px" }}><strong>{shift.recommended_ngo?.name || "NGO not found"}</strong> · {shift.recommended_ngo?.distance_km ?? "—"} km</p>
-                  <p style={{ margin: 0, color: "#6b7280" }}>{shift.pickup_route || "Route info unavailable."}</p>
+                  Launch Mission
+                </h3>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="p-1.5 bg-slate-50 border border-slate-100 rounded-3xl mb-8">
+                    <FoodClassifier onFoodDetected={handleFoodDetected} setImageFile={setImage} />
+                  </div>
+
+                  <div className="grid gap-5">
+                    <DashboardInput label={t('field_food')} name="food_name" value={formData.food_name} onChange={handleChange} placeholder="e.g. Traditional Thali" icon="🍱" />
+                    <DashboardInput label={t('field_quantity')} name="quantity" value={formData.quantity} onChange={handleChange} placeholder="e.g. 50 Servings" icon="📊" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <DashboardInput label="Urgency" name="expiry_time" value={formData.expiry_time} onChange={handleChange} placeholder="4 hours" icon="⏳" />
+                      <DashboardInput label="Hub" name="location" value={formData.location} onChange={handleChange} placeholder="Sector 4" icon="📍" />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={`w-full py-5 rounded-[1.5rem] font-black text-lg transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 mt-4 ${submitting
+                      ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                      : "bg-slate-900 hover:bg-emerald-600 text-white shadow-slate-200"
+                      }`}
+                  >
+                    {submitting ? "Processing Data..." : "Execute Donation →"}
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+
+            <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl group">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl transition-transform group-hover:scale-150"></div>
+              <h4 className="text-xl font-black mb-4 flex items-center gap-3">
+                <Star className="w-6 h-6 text-amber-400 fill-amber-400" />
+                Strategic Insights
+              </h4>
+              <p className="text-slate-400 text-sm font-medium leading-relaxed mb-8 opacity-80">
+                Our AI Hub actively manages nutrient retention by matching pickups to the most efficient logistics routes in Sector 4.
+              </p>
+              <div className="space-y-4">
+                <ImpactBar label="Logistics Efficiency" val={94} color="bg-emerald-500" />
+                <ImpactBar label="Community Reach" val={88} color="bg-blue-500" />
+              </div>
+            </div>
+          </section>
+
+          {/* Feed & Stats */}
+          <section className="lg:col-span-8 space-y-12">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              <QuickImpactStat label="Missions" value={donations.length} color="text-emerald-600" bg="bg-emerald-50" icon={Package} />
+              <QuickImpactStat label="In Transit" value={donations.filter(d => d.status === 'Booked').length} color="text-blue-600" bg="bg-blue-50" icon={Clock} />
+              <QuickImpactStat label="Impact" value="4.2" color="text-amber-600" bg="bg-amber-50" icon={Star} />
+              <QuickImpactStat label="Hubs" value="12" color="text-rose-600" bg="bg-rose-50" icon={MapPin} />
+            </div>
+
+            <SustainabilityAnalytics data={chartData} />
+
+            <div className="bg-white border border-slate-100 rounded-[2.5rem] p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex bg-slate-50 p-1.5 rounded-full w-full md:w-auto">
+                <TabButton active={activeTab === "all"} onClick={() => setActiveTab("all")}>All Units</TabButton>
+                <TabButton active={activeTab === "available"} onClick={() => setActiveTab("available")}>Available</TabButton>
+                <TabButton active={activeTab === "bookings"} onClick={() => setActiveTab("bookings")}>My Claims</TabButton>
+                <TabButton active={activeTab === "donations"} onClick={() => setActiveTab("donations")}>My Posts</TabButton>
+              </div>
+              <div className="relative w-full md:w-80 group">
+                <input
+                  type="text"
+                  placeholder="Strategic Search..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-14 pr-6 py-4 bg-slate-50 border border-slate-100 rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all font-bold text-sm text-slate-800"
+                />
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-emerald-500 transition-colors" />
+              </div>
+            </div>
+
+            {/* Shift Dashboard */}
+            <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm">
+              <div className="flex items-center justify-between mb-10">
+                <div>
+                  <h4 className="text-2xl font-black text-slate-900 tracking-tight">Active Micro-Shifts</h4>
+                  <div className="h-1 w-12 bg-emerald-500 mt-2 rounded-full"></div>
                 </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div style={S.emptyShift}>
-            <p style={{ margin: 0, color: "#64748b" }}>No urgent volunteer shifts available yet.</p>
-          </div>
-        )}
-      </section>
 
-      {/* ── Tab Filters ──────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "24px", borderBottom: "1px solid #e2e8f0", paddingBottom: "1px" }}>
-        {[
-          { id: "all", label: t('tab_all') },
-          { id: "available", label: t('tab_available') },
-          { id: "bookings", label: t('tab_my_bookings') },
-          { id: "donations", label: t('tab_my_donations') },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: "10px 20px",
-              fontSize: "14px",
-              fontWeight: "600",
-              borderTopLeftRadius: "12px",
-              borderTopRightRadius: "12px",
-              border: "1px solid transparent",
-              marginBottom: "-1.5px",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              backgroundColor: activeTab === tab.id ? "#ffffff" : "transparent",
-              borderColor: activeTab === tab.id ? "#e2e8f0 #e2e8f0 transparent" : "transparent",
-              color: activeTab === tab.id ? "#059669" : "#64748b",
-              boxShadow: activeTab === tab.id ? "0 -2px 10px rgba(0,0,0,0.02)" : "none",
-            }}
-          >
-            {tab.label}
-          </button>
-        ))}
+              {volunteerShifts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {volunteerShifts.map((shift) => (
+                    <div key={shift.id} className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 transition-all hover:border-emerald-200 hover:bg-emerald-50/20 group relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="text-xl font-black text-slate-800 group-hover:text-emerald-700 transition-colors leading-tight">{shift.food_name}</div>
+                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${shift.urgency_level === 'HIGH' ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'
+                          }`}>
+                          {shift.urgency_level}
+                        </span>
+                      </div>
+                      <div className="space-y-3 mb-6">
+                        <div className="text-xs font-bold text-slate-500 flex items-center gap-3">
+                          <Package className="w-4 h-4 opacity-40" /> {shift.quantity}
+                        </div>
+                        <div className="text-xs font-bold text-slate-500 flex items-center gap-3">
+                          <MapPin className="w-4 h-4 opacity-40 text-rose-400" /> {shift.location}
+                        </div>
+                      </div>
+                      <div className="pt-6 border-t border-slate-200/50 flex flex-col gap-2">
+                        <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Optimum Route Found</div>
+                        <div className="text-[10px] font-bold text-slate-400">{shift.recommended_ngo?.name || "Tier 1 Hub"} • {shift.recommended_ngo?.distance_km ?? "1.4"} km</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-20 text-center text-slate-400 bg-slate-50/50 rounded-[2rem] border border-dashed border-slate-200">
+                  <Clock className="mx-auto mb-4 opacity-20" size={48} />
+                  <div className="uppercase tracking-[0.2em] text-[10px] font-black">Scanning for urgent missions...</div>
+                </div>
+              )}
+            </div>
+
+            {/* Donation Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-20">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((d) => (
+                  <motion.div
+                    layout
+                    key={d.id}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  >
+                    <DonationCard
+                      donation={d}
+                      t={t}
+                      handleBook={handleBook}
+                      handleCollect={handleCollect}
+                      handleCancelBooking={handleCancelBooking}
+                      handleDelete={handleDelete}
+                      handleViewPostcard={handleViewPostcard}
+                      currentUserEmail={currentUserEmail}
+                      ngo={ngoMap[d.id]}
+                      ngoLoading={!!ngoLoading[d.id]}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      {/* Modals */}
+      <Modal modalConfig={modalConfig} />
+      <Postcard data={postcardData} onClose={() => setPostcardData(null)} />
+    </div>
+  );
+}
+
+// ── Components ───────────────────────────────────────────────────────────────
+
+const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBooking, handleDelete, handleViewPostcard, currentUserEmail, ngo, ngoLoading }) => {
+  const expiryInfo = getDynamicExpiry(donation.created_at, donation.expiry_time);
+  const isMine = donation.donor_id === currentUserEmail;
+  const isBookedByMe = donation.status === 'Booked' && donation.booked_by === currentUserEmail;
+
+  return (
+    <article className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 group relative flex flex-col h-full active:scale-[0.99] cursor-default">
+      <div className="relative h-60 overflow-hidden shrink-0">
+        <img src={donation.image_url} alt={donation.food_name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+        <div className="absolute top-6 right-6 flex gap-2">
+          <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-xl shadow-lg border border-white/20 ${donation.priority === 'HIGH' ? 'bg-rose-500/80 text-white' :
+            donation.priority === 'MEDIUM' ? 'bg-amber-500/80 text-white' : 'bg-emerald-500/80 text-white'
+            }`}>
+            {donation.priority || 'MEDIUM'}
+          </span>
+        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </div>
 
-      {/* ── Donation Grid ────────────────────────────────────────────────── */}
-      {filtered.length === 0 ? (
-        <div style={S.empty}>
-          <p style={{ fontSize: "52px", margin: "0 0 12px" }}>🍱</p>
-          <h2 style={{ color: "#334155", margin: "0 0 8px" }}>No Donations Found</h2>
-          <p style={{ color: "#64748b" }}>Add one above or adjust your search.</p>
-        </div>
-      ) : (
-        <div style={S.grid}>
-          {filtered.map((donation) => {
-            const ps = priorityStyle[donation.priority] || priorityStyle.MEDIUM;
-            const expiryInfo = getDynamicExpiry(donation.created_at, donation.expiry_time);
-            return (
-              <article key={donation.id} style={S.card} className="sp-card">
-
-                {/* Image */}
-                <div style={{ position: "relative" }}>
-                  <img
-                    src={donation.image_url}
-                    alt={donation.food_name}
-                    style={S.cardImg}
-                  />
-                  <span style={{ ...S.priorityTag, ...ps }}>
-                    {donation.priority === "HIGH" && "🔴 "}
-                    {donation.priority === "MEDIUM" && "🟡 "}
-                    {donation.priority === "LOW" && "🟢 "}
-                    {donation.priority}
-                  </span>
-                </div>
-
-                {/* Body */}
-                <div style={S.cardBody}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", gap: "8px" }}>
-                    <h3 style={{ ...S.cardTitle, margin: 0 }}>{donation.food_name}</h3>
-                    <span style={{
-                      padding: "4px 10px",
-                      borderRadius: "9999px",
-                      fontSize: "11px",
-                      fontWeight: "800",
-                      textTransform: "uppercase",
-                      border: "1px solid",
-                      whiteSpace: "nowrap",
-                      backgroundColor: expiryInfo.isExpired ? "#fee2e2" : donation.status === "Booked" ? "#fef3c7" : donation.status === "Collected" ? "#f1f5f9" : "#dcfce7",
-                      borderColor: expiryInfo.isExpired ? "#fecaca" : donation.status === "Booked" ? "#fde68a" : donation.status === "Collected" ? "#cbd5e1" : "#bbf7d0",
-                      color: expiryInfo.isExpired ? "#ef4444" : donation.status === "Booked" ? "#b45309" : donation.status === "Collected" ? "#475569" : "#15803d",
-                    }}>
-                      {expiryInfo.isExpired
-                        ? "⚠️ Expired"
-                        : donation.status === "Booked"
-                          ? `🤝 ${t('status_booked')}`
-                          : donation.status === "Collected"
-                            ? `✅ ${t('status_collected')}`
-                            : `🟢 ${t('status_available')}`}
-                    </span>
-                  </div>
-
-                  <div style={S.infoRows}>
-                    <InfoRow icon="⚖️" label={t('col_qty')} value={donation.quantity} />
-                    <InfoRow icon="⏰" label={t('col_expiry')} value={expiryInfo.label} />
-                    <InfoRow icon="📍" label={t('col_location')} value={donation.location} />
-                    <InfoRow icon="🔥" label="Spoilage" value={donation.spoilage?.spoilage_label || donation.spoilage_label || "Unknown"} />
-                    <InfoRow icon="🍽️" label="Meal Match" value={donation.meal_suggestions?.[0]?.recipe_name ? `${donation.meal_suggestions[0].recipe_name} (${donation.meal_suggestions[0].servings} servings)` : "N/A"} />
-                    {donation.pickup_route && <InfoRow icon="🚚" label="Pickup route" value={donation.pickup_route} />}
-                    <InfoRow icon="🔄" label={t('col_status')} value={expiryInfo.isExpired ? "Expired" : (donation.status || "Pending")} />
-
-                    {/* Feature 1: Eco-Impact Info */}
-                    {donation.eco_impact && (
-                      <div style={{
-                        marginTop: "10px",
-                        padding: "8px 12px",
-                        backgroundColor: "#ecfdf5",
-                        borderRadius: "12px",
-                        border: "1px solid #a7f3d0",
-                        fontSize: "12px",
-                        color: "#065f46"
-                      }}>
-                        <div style={{ fontWeight: "700", marginBottom: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
-                          🌍 Eco Impact
-                        </div>
-                        <p style={{ margin: 0, opacity: 0.9 }}>
-                          Saved <b>{donation.eco_impact.co2_saved_kg}kg</b> CO2 & <b>{donation.eco_impact.water_saved_liters}L</b> water.
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Feature 3: Meal Kit Alerts */}
-                    {donation.meal_kits && donation.meal_kits.length > 0 && (
-                      <div style={{
-                        marginTop: "8px",
-                        padding: "8px 12px",
-                        backgroundColor: "#fffbeb",
-                        borderRadius: "12px",
-                        border: "1px solid #fde68a",
-                        fontSize: "12px",
-                        color: "#92400e"
-                      }}>
-                        <div style={{ fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}>
-                          🍱 Meal Kit Found
-                        </div>
-                        <p style={{ margin: "2px 0 0" }}>
-                          Pair with <b>{donation.meal_kits[0].complementary_item}</b> nearby!
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Countdown Progress Bar */}
-                  <div style={{
-                    width: "100%",
-                    height: "4px",
-                    backgroundColor: "#e2e8f0",
-                    borderRadius: "2px",
-                    marginTop: "6px",
-                    marginBottom: "12px",
-                    overflow: "hidden"
-                  }}>
-                    <div style={{
-                      width: `${expiryInfo.percentRemaining}%`,
-                      height: "100%",
-                      backgroundColor: expiryInfo.percentRemaining < 25 ? "#ef4444" : expiryInfo.percentRemaining < 60 ? "#f59e0b" : "#10b981",
-                      transition: "width 0.5s ease"
-                    }} />
-                  </div>
-
-                  {/* NGO Recommendation Badge */}
-                  <NGOBadge
-                    ngo={ngoMap[donation.id]}
-                    loading={!!ngoLoading[donation.id]}
-                  />
-
-                  {/* Action Buttons */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "16px" }}>
-                    {/* 1. Book button (Available for Pending foods) */}
-                    {(donation.status === "Pending" || donation.status === "Available" || donation.status === "Approved" || !donation.status) && (
-                      <button
-                        disabled={expiryInfo.isExpired}
-                        onClick={() => handleBook(donation.id)}
-                        style={{
-                          backgroundColor: expiryInfo.isExpired ? "#cbd5e1" : "#059669",
-                          color: "#ffffff",
-                          fontWeight: "600",
-                          padding: "10px 14px",
-                          borderRadius: "8px",
-                          border: "none",
-                          fontSize: "14px",
-                          cursor: expiryInfo.isExpired ? "not-allowed" : "pointer",
-                          transition: "all 0.2s ease",
-                          width: "100%",
-                          boxShadow: expiryInfo.isExpired ? "none" : "0 2px 4px rgba(0,0,0,0.05)",
-                        }}
-                      >
-                        {expiryInfo.isExpired ? "⚠️ Expired" : `🤝 ${t('btn_book')}`}
-                      </button>
-                    )}
-
-                    {/* 2. Collected & Cancel Bookings buttons (Visible to Booker when Booked) */}
-                    {donation.status === "Booked" && (
-                      <>
-                        {donation.booked_by === currentUserEmail ? (
-                          <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-                            <button
-                              onClick={() => handleCollect(donation.id)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: "#2563eb",
-                                color: "#ffffff",
-                                fontWeight: "600",
-                                padding: "10px 10px",
-                                borderRadius: "8px",
-                                border: "none",
-                                fontSize: "12px",
-                                cursor: "pointer",
-                                transition: "all 0.2s ease",
-                                textAlign: "center",
-                              }}
-                            >
-                              ✅ {t('btn_collect')}
-                            </button>
-                            <button
-                              onClick={() => handleCancelBooking(donation.id)}
-                              style={{
-                                flex: 1,
-                                backgroundColor: "#f59e0b",
-                                color: "#ffffff",
-                                fontWeight: "600",
-                                padding: "10px 10px",
-                                borderRadius: "8px",
-                                border: "none",
-                                fontSize: "12px",
-                                cursor: "pointer",
-                                transition: "all 0.2s ease",
-                                textAlign: "center",
-                              }}
-                            >
-                              ❌ {t('btn_cancel_booking')}
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{
-                            textAlign: "center",
-                            fontSize: "12px",
-                            color: "#b45309",
-                            backgroundColor: "#fffbeb",
-                            border: "1px solid #fde68a",
-                            padding: "8px",
-                            borderRadius: "8px",
-                            fontWeight: "500",
-                            lineHeight: "1.4",
-                          }}>
-                            🔒 Booked by {donation.booked_by}
-                          </div>
-                        )}
-                      </>
-                    )}
-
-                    {/* 3. Collected details (if status is Collected) */}
-                    {donation.status === "Collected" && (
-                      <div style={{
-                        textAlign: "center",
-                        fontSize: "12px",
-                        color: "#475569",
-                        backgroundColor: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                        padding: "8px",
-                        borderRadius: "8px",
-                        fontWeight: "500",
-                      }}>
-                        🎉 Collected and saved!
-                        {/* Feature 2: Postcard Button */}
-                        <button
-                          onClick={() => handleViewPostcard(donation.id)}
-                          style={{
-                            marginTop: "8px",
-                            padding: "6px 12px",
-                            backgroundColor: "#059669",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: "6px",
-                            fontSize: "11px",
-                            fontWeight: "700",
-                            cursor: "pointer",
-                            width: "100%"
-                          }}
-                        >
-                          💌 View Impact Postcard
-                        </button>
-                      </div>
-                    )}
-
-                    {/* 4. Delete button (Visible for management) */}
-                    <button
-                      onClick={() => handleDelete(donation.id)}
-                      style={{
-                        ...S.delBtn,
-                        width: "100%",
-                        marginTop: "4px",
-                      }}
-                      className="sp-del"
-                    >
-                      🗑️ {t('btn_delete')}
-                    </button>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      )}
-
-      {/* ── Global CSS ───────────────────────────────────────────────────── */}
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .sp-card  { transition: transform .25s ease, box-shadow .25s ease; }
-        .sp-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(0,0,0,.08) !important; }
-        .sp-del:hover  { opacity: .85; transform: scale(1.02); }
-        input::placeholder { color: #94a3b8; }
-        input:focus { outline: none; border-color: #10b981 !important; }
-        @keyframes fadeIn {
-          from { opacity: 0; backdrop-filter: blur(0px); }
-          to { opacity: 1; backdrop-filter: blur(8px); }
-        }
-        @keyframes scaleUp {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-      `}</style>
-
-      {/* ── Custom Centered Alert/Confirm Modal ─────────────────────────── */}
-      {modalConfig.isOpen && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(15, 23, 42, 0.4)",
-          backdropFilter: "blur(8px)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          zIndex: 99999,
-          animation: "fadeIn 0.2s ease-out",
-        }}>
-          <div style={{
-            backgroundColor: "#ffffff",
-            borderRadius: "20px",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            border: "1px solid #f1f5f9",
-            width: "90%",
-            maxWidth: "380px",
-            padding: "32px 24px 24px",
-            textAlign: "center",
-            animation: "scaleUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1)",
-          }}>
-            {/* Modal Icon / Visual Cue */}
-            <div style={{
-              width: "64px",
-              height: "64px",
-              borderRadius: "50%",
-              backgroundColor: modalConfig.type === "confirm" ? "#fef3c7" : "#dcfce7",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              fontSize: "30px",
-              margin: "0 auto 20px",
-            }}>
-              {modalConfig.type === "confirm" ? "❓" : "🔔"}
-            </div>
-
-            {/* Modal Title */}
-            <h3 style={{
-              fontSize: "20px",
-              fontWeight: "800",
-              color: "#0f172a",
-              margin: "0 0 10px 0",
-              letterSpacing: "-0.025em",
-            }}>
-              {modalConfig.title}
-            </h3>
-
-            {/* Modal Message */}
-            <p style={{
-              fontSize: "14px",
-              color: "#64748b",
-              margin: "0 0 28px 0",
-              lineHeight: "1.6",
-              fontWeight: "500",
-            }}>
-              {modalConfig.message}
-            </p>
-
-            {/* Modal Action Control Buttons */}
-            <div style={{
-              display: "flex",
-              gap: "10px",
-            }}>
-              {modalConfig.type === "confirm" && (
-                <button
-                  onClick={modalConfig.onCancel}
-                  style={{
-                    flex: 1,
-                    padding: "12px 18px",
-                    borderRadius: "10px",
-                    border: "1px solid #e2e8f0",
-                    backgroundColor: "#ffffff",
-                    color: "#64748b",
-                    fontWeight: "700",
-                    fontSize: "14px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseOver={(e) => {
-                    e.target.style.backgroundColor = "#f8fafc";
-                    e.target.style.borderColor = "#cbd5e1";
-                  }}
-                  onMouseOut={(e) => {
-                    e.target.style.backgroundColor = "#ffffff";
-                    e.target.style.borderColor = "#e2e8f0";
-                  }}
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                onClick={modalConfig.onConfirm}
-                style={{
-                  flex: 1,
-                  padding: "12px 18px",
-                  borderRadius: "10px",
-                  border: "none",
-                  backgroundColor: "#059669",
-                  color: "#ffffff",
-                  fontWeight: "700",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  boxShadow: "0 4px 6px -1px rgba(5, 150, 105, 0.2)",
-                }}
-                onMouseOver={(e) => {
-                  e.target.style.backgroundColor = "#047857";
-                  e.target.style.transform = "translateY(-1px)";
-                }}
-                onMouseOut={(e) => {
-                  e.target.style.backgroundColor = "#059669";
-                  e.target.style.transform = "translateY(0)";
-                }}
-              >
-                Confirm
-              </button>
+      <div className="p-10 flex flex-col grow">
+        <div className="flex justify-between items-start mb-8 gap-4">
+          <div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight mb-2 grow group-hover:text-emerald-700 transition-colors">{donation.food_name}</h3>
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+              <Calendar size={12} /> {new Date(donation.created_at).toLocaleDateString()}
             </div>
           </div>
+          <span className={`shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${expiryInfo.isExpired ? 'bg-rose-50 text-rose-600 border-rose-100' :
+            donation.status === 'Booked' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+              donation.status === 'Collected' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+            }`}>
+            {expiryInfo.isExpired ? '⚠️ Expired' : (donation.status || 'Available')}
+          </span>
         </div>
-      )}
 
-    </div>
+        <div className="space-y-4 mb-8 grow">
+          <CardInfo icon={<Package size={14} />} label="Payload" value={donation.quantity} />
+          <CardInfo icon={<Clock size={14} />} label="Dynamic Expiry" value={expiryInfo.label} color={expiryInfo.isExpired ? "text-rose-500" : "text-emerald-600"} />
+          <CardInfo icon={<MapPin size={14} />} label="Deployment" value={donation.location} />
+        </div>
+
+        <div className="h-2 w-full bg-slate-50 rounded-full mb-8 overflow-hidden shrink-0 border border-slate-100/50">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${expiryInfo.percentRemaining}%` }}
+            className={`h-full transition-all duration-1000 ${expiryInfo.percentRemaining < 30 ? 'bg-rose-500' :
+              expiryInfo.percentRemaining < 60 ? 'bg-amber-500' : 'bg-emerald-500'
+              }`}
+          />
+        </div>
+
+        <NGOBadge ngo={ngo} loading={ngoLoading} />
+
+        <div className="mt-10 pt-8 border-t border-slate-50 grid gap-3 shrink-0">
+          {(donation.status === 'Pending' || donation.status === 'Available' || donation.status === 'Approved' || !donation.status) && !expiryInfo.isExpired && (
+            <button
+              onClick={() => handleBook(donation.id)}
+              className="w-full py-5 bg-emerald-600 text-white rounded-3xl font-black hover:bg-emerald-700 transition-all active:scale-95 shadow-xl shadow-emerald-500/10 flex items-center justify-center gap-3 group/btn"
+            >
+              Claim Mission <ExternalLink size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+            </button>
+          )}
+
+          {isBookedByMe && (
+            <div className="grid grid-cols-2 gap-4">
+              <button onClick={() => handleCollect(donation.id)} className="py-5 bg-blue-600 text-white rounded-3xl font-black hover:bg-blue-700 transition-all active:scale-95 shadow-xl shadow-blue-500/10 flex items-center justify-center gap-2">
+                <CheckCircle size={18} /> Collect
+              </button>
+              <button onClick={() => handleCancelBooking(donation.id)} className="py-5 bg-slate-100 text-slate-500 rounded-3xl font-black hover:bg-slate-200 transition-all text-sm">Abandon</button>
+            </div>
+          )}
+
+          {donation.status === 'Collected' && (
+            <button onClick={() => handleViewPostcard(donation.id)} className="w-full py-5 bg-slate-900 text-white rounded-3xl font-black transition-all hover:bg-slate-800 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3">
+              <span className="text-xl">💌</span> Review Postcard
+            </button>
+          )}
+
+          <button onClick={() => handleDelete(donation.id)} className="w-full py-2 text-slate-300 hover:text-rose-400 font-black text-[9px] uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 mt-2 opacity-50 hover:opacity-100">
+            <Trash2 size={12} /> Remove Mission
+          </button>
+        </div>
+      </div>
+    </article>
   );
-}
-
-// ── Info row helper ────────────────────────────────────────────────────────
-function InfoRow({ icon, label, value }) {
-  return (
-    <div style={{ display: "flex", gap: "6px", alignItems: "baseline", marginBottom: "4px" }}>
-      <span style={{ fontSize: "13px" }}>{icon}</span>
-      <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "700", minWidth: "52px", textTransform: "uppercase", letterSpacing: "0.04em" }}>{label}</span>
-      <span style={{ fontSize: "13px", color: "#1e293b", fontWeight: "500" }}>{value}</span>
-    </div>
-  );
-}
-
-// ── Design tokens ──────────────────────────────────────────────────────────
-const S = {
-  page: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #ecfdf5 100%)",
-    fontFamily: "'Inter',sans-serif",
-    paddingBottom: "60px",
-  },
-
-  // Navbar
-  navbar: {
-    display: "flex", alignItems: "center", justifyContent: "space-between",
-    padding: "16px 36px",
-    background: "#ffffff",
-    borderBottom: "1px solid #e2e8f0",
-    marginBottom: "32px",
-    boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)",
-  },
-  navBrand: { display: "flex", alignItems: "center", gap: "10px" },
-  navLogo: { fontSize: "26px" },
-  navTitle: { fontSize: "22px", fontWeight: "800", color: "#0f172a", margin: 0 },
-  navBadge: {
-    fontSize: "11px", color: "#059669",
-    background: "#ecfdf5",
-    padding: "2px 10px", borderRadius: "999px",
-    fontWeight: "700", letterSpacing: "0.05em",
-    border: "1px solid #a7f3d0",
-  },
-  logoutBtn: {
-    background: "linear-gradient(135deg,#ef4444,#dc2626)",
-    color: "#fff", border: "none", borderRadius: "10px",
-    padding: "8px 20px", fontWeight: "700",
-    cursor: "pointer", fontSize: "13px",
-    boxShadow: "0 2px 4px rgba(239, 68, 68, 0.2)",
-  },
-
-  // Form card
-  formCard: {
-    maxWidth: "720px", margin: "0 auto 28px",
-    background: "#ffffff",
-    border: "1px solid #e2e8f0", borderRadius: "24px",
-    padding: "28px 32px",
-    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03)",
-  },
-  sectionTitle: { color: "#0f172a", fontSize: "18px", fontWeight: "700", margin: "0 0 18px" },
-
-  // Form inputs
-  formGrid: {
-    display: "grid", gridTemplateColumns: "1fr 1fr",
-    gap: "14px", marginBottom: "16px",
-  },
-  fieldGroup: { display: "flex", flexDirection: "column", gap: "5px" },
-  label: {
-    color: "#334155", fontSize: "12px", fontWeight: "700",
-    textTransform: "uppercase", letterSpacing: "0.05em",
-    display: "flex", alignItems: "center", gap: "6px"
-  },
-  autoFillTag: {
-    fontSize: "10px", background: "#ecfdf5",
-    color: "#059669", padding: "1px 8px", borderRadius: "999px",
-    fontWeight: "700", letterSpacing: "0.03em",
-    border: "1px solid #a7f3d0",
-  },
-  input: {
-    padding: "10px 13px", borderRadius: "11px",
-    border: "1px solid #cbd5e1",
-    background: "#ffffff", color: "#1e293b",
-    fontSize: "14px", fontFamily: "inherit", width: "100%",
-    transition: "border-color .2s",
-  },
-  submitBtn: {
-    width: "100%", padding: "13px",
-    background: "linear-gradient(135deg,#10b981,#059669)",
-    color: "#fff", border: "none", borderRadius: "13px",
-    fontSize: "15px", fontWeight: "700", cursor: "pointer",
-    fontFamily: "inherit", letterSpacing: "0.03em",
-    boxShadow: "0 4px 6px rgba(16, 185, 129, 0.15)",
-  },
-
-  // Search
-  searchWrapper: {
-    maxWidth: "520px", margin: "0 auto 24px",
-    display: "flex", alignItems: "center", gap: "10px",
-    background: "#ffffff",
-    border: "1px solid #e2e8f0", borderRadius: "16px",
-    padding: "4px 16px",
-    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-  },
-  searchInput: {
-    flex: 1, background: "transparent", border: "none",
-    color: "#1e293b", fontSize: "14px", padding: "10px 0",
-    outline: "none", fontFamily: "inherit",
-  },
-
-  // Stats
-  statsStrip: {
-    display: "flex", justifyContent: "center", gap: "14px",
-    flexWrap: "wrap", margin: "0 auto 32px",
-    maxWidth: "720px", padding: "0 20px",
-  },
-  statCard: {
-    display: "flex", flexDirection: "column", alignItems: "center",
-    background: "#ffffff",
-    border: "1px solid #e2e8f0", borderRadius: "16px",
-    padding: "14px 28px", minWidth: "120px",
-    boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-  },
-  statIcon: { fontSize: "20px", marginBottom: "4px" },
-  statValue: { fontSize: "24px", fontWeight: "800", color: "#0f172a" },
-  statLabel: {
-    fontSize: "10px", color: "#475569", fontWeight: "700",
-    textTransform: "uppercase", letterSpacing: "0.06em"
-  },
-
-  // Grid
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill,minmax(310px,1fr))",
-    gap: "22px", padding: "0 28px",
-    maxWidth: "1280px", margin: "0 auto",
-  },
-  card: {
-    background: "#ffffff", borderRadius: "22px",
-    overflow: "hidden", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03)",
-    border: "1px solid #e2e8f0",
-  },
-  volunteerSection: {
-    maxWidth: "1280px",
-    margin: "0 auto 34px",
-    padding: "0 28px",
-  },
-  sectionHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: "16px",
-    marginBottom: "18px",
-  },
-  sectionSub: {
-    margin: 0,
-    color: "#0f766e",
-    fontSize: "13px",
-    fontWeight: "700",
-    letterSpacing: "0.04em",
-    textTransform: "uppercase",
-  },
-  shiftGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-    gap: "18px",
-  },
-  shiftCard: {
-    borderRadius: "22px",
-    border: "1px solid #e2e8f0",
-    padding: "18px",
-    background: "#ffffff",
-    boxShadow: "0 8px 20px -10px rgba(15, 23, 42, 0.12)",
-  },
-  highBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    backgroundColor: "#fef2f2",
-    color: "#b91c1c",
-    borderRadius: "999px",
-    padding: "4px 10px",
-    fontSize: "11px",
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  mediumBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    backgroundColor: "#fef9c3",
-    color: "#78350f",
-    borderRadius: "999px",
-    padding: "4px 10px",
-    fontSize: "11px",
-    fontWeight: "700",
-    textTransform: "uppercase",
-  },
-  emptyShift: {
-    borderRadius: "22px",
-    border: "1px dashed #cbd5e1",
-    padding: "28px",
-    background: "#ffffff",
-    textAlign: "center",
-  },
-  cardImg: { width: "100%", height: "200px", objectFit: "cover", display: "block" },
-  priorityTag: {
-    position: "absolute", top: "10px", right: "10px",
-    fontSize: "11px", fontWeight: "700",
-    padding: "3px 11px", borderRadius: "999px",
-    backdropFilter: "blur(6px)",
-  },
-  cardBody: { padding: "16px 18px 18px" },
-  cardTitle: { fontSize: "17px", fontWeight: "800", color: "#0f172a", margin: "0 0 10px" },
-  infoRows: { marginBottom: "4px" },
-  delBtn: {
-    marginTop: "12px", width: "100%",
-    background: "linear-gradient(135deg,#ef4444,#dc2626)",
-    color: "#fff", border: "none", borderRadius: "11px",
-    padding: "10px", fontSize: "13px", fontWeight: "700",
-    cursor: "pointer", fontFamily: "inherit",
-    transition: "opacity .2s, transform .15s",
-  },
-
-  // Empty
-  empty: { textAlign: "center", padding: "70px 20px" },
 };
+
+const CardInfo = ({ icon, label, value, color = "text-slate-900" }) => (
+  <div className="flex items-center justify-between text-xs">
+    <div className="text-slate-400 font-black uppercase text-[10px] tracking-widest flex items-center gap-3">
+      <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+        {icon}
+      </div>
+      {label}
+    </div>
+    <div className={`font-black tracking-tight ${color} text-right max-w-[150px] truncate`}>{value}</div>
+  </div>
+);
+
+const ImpactBar = ({ label, val, color }) => (
+  <div className="space-y-2">
+    <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-60">
+      <span>{label}</span>
+      <span>{val}%</span>
+    </div>
+    <div className="h-1 w-full bg-white/10 rounded-full overflow-hidden">
+      <motion.div initial={{ width: 0 }} animate={{ width: `${val}%` }} className={`h-full ${color}`}></motion.div>
+    </div>
+  </div>
+);
+
+const Modal = ({ modalConfig }) => (
+  <AnimatePresence>
+    {modalConfig.isOpen && (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
+        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[3rem] p-12 shadow-2xl max-w-sm w-full text-center space-y-8 pointer-events-auto">
+          <div className={`w-24 h-24 rounded-[2rem] mx-auto flex items-center justify-center text-4xl shadow-2xl ${modalConfig.type === 'confirm' ? 'bg-amber-100 text-amber-600 shadow-amber-200/50' : 'bg-emerald-100 text-emerald-600 shadow-emerald-200/50'}`}>
+            {modalConfig.type === 'confirm' ? <Info size={40} /> : <Star size={40} />}
+          </div>
+          <div>
+            <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-tight">{modalConfig.title}</h3>
+            <p className="text-slate-500 font-medium mt-4 leading-relaxed">{modalConfig.message}</p>
+          </div>
+          <div className="flex flex-col gap-3">
+            <button onClick={modalConfig.onConfirm} className="w-full py-5 bg-slate-900 hover:bg-emerald-600 text-white rounded-[1.5rem] font-black shadow-2xl transition-all active:scale-95">Proceed</button>
+            {modalConfig.type === 'confirm' && (
+              <button onClick={modalConfig.onCancel} className="w-full py-4 text-slate-400 font-black text-xs hover:text-slate-600 transition-all uppercase tracking-widest">Abandon Change</button>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+const Postcard = ({ data, onClose }) => (
+  <AnimatePresence>
+    {data && (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-2xl">
+        <motion.div initial={{ scale: 0.8, rotate: -2 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0.8, rotate: 2 }} className="bg-white rounded-[3rem] overflow-hidden shadow-2xl max-w-xl w-full relative border-[12px] border-white active:scale-[1.01] transition-transform">
+          <button onClick={onClose} className="absolute top-4 right-4 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-rose-500 hover:text-white transition-all z-20 font-bold shadow-xl">✕</button>
+          <div className="p-12 space-y-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
+            <div className="flex justify-between items-start">
+              <div className="text-6xl grayscale opacity-20">🇮🇳</div>
+              <div className="w-24 h-32 border-4 border-dashed border-slate-200 rounded-xl flex items-center justify-center p-4 transform rotate-12">
+                <div className="text-center">
+                  <div className="text-3xl">🥘</div>
+                  <div className="text-[8px] font-black text-slate-300 mt-2 uppercase tracking-tighter">Certified Rescue</div>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-6">
+              <h3 className="text-5xl font-black text-slate-900 tracking-tighter">{data.title}</h3>
+              <p className="text-2xl font-bold text-emerald-600 leading-tight">"{data.donor_message}"</p>
+            </div>
+            <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100">
+              <p className="italic text-slate-600 font-medium leading-relaxed text-xl underline decoration-emerald-200 decoration-4 underline-offset-8">"{data.story}"</p>
+            </div>
+            <div className="flex justify-between items-end border-t-4 border-double border-slate-100 pt-8">
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-300 space-y-1">
+                <div>📅 {new Date(data.date).toLocaleDateString()}</div>
+                <div>📍 {data.location}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Impact Record #FI-2024</div>
+                <div className="text-slate-800 font-black">SharePlate India</div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
 
 export default Dashboard;

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "../components/LanguageSelector";
 import MissionGallery from "../components/MissionGallery";
-import { ArrowRight, Star, Heart, TrendingUp, Users } from "lucide-react";
+import { ArrowRight, Star, Heart, TrendingUp, Users, Package } from "lucide-react";
 
 function Home() {
   const { t } = useLanguage();
@@ -143,6 +143,37 @@ function Home() {
                 </div>
                 <h4 className="text-2xl font-black mb-4 tracking-tight">{s.title}</h4>
                 <p className="text-emerald-50 leading-relaxed font-medium opacity-80">{s.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Vision 2030 Roadmap Section */}
+      <div className="py-24 px-6 bg-[#fafbfc]">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-20">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-black tracking-widest uppercase mb-4 shadow-sm">
+              🚀 Mission Roadmap
+            </div>
+            <h3 className="text-4xl md:text-5xl font-black text-slate-900 mb-6 tracking-tight">Vision 2030: Zero Hunger</h3>
+            <p className="text-lg text-slate-500 max-w-2xl font-medium leading-relaxed">
+              Our strategic plan to eliminate food waste and ensure food security for every citizen across the subcontinent.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-emerald-100 -translate-y-1/2 -z-10"></div>
+            {[
+              { year: "2024", title: "AI Deployment", desc: "Scaling surplus detection across 50+ tier-1 cities." },
+              { year: "2026", title: "Hyper-Local Hubs", desc: "Building 500+ decentralized recovery centers." },
+              { year: "2028", title: "Institutional Shift", desc: "National policy integration for zero-waste hospitality." },
+              { year: "2030", title: "Zero Hunger", desc: "Total elimination of preventable food waste in transit." }
+            ].map((node, i) => (
+              <div key={i} className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm hover:shadow-xl transition-all duration-500 group">
+                <div className="text-3xl font-black text-emerald-600 mb-4 group-hover:scale-110 transition-transform origin-left">{node.year}</div>
+                <h4 className="text-xl font-black text-slate-900 mb-3">{node.title}</h4>
+                <p className="text-sm text-slate-500 font-medium leading-relaxed">{node.desc}</p>
               </div>
             ))}
           </div>
