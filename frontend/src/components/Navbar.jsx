@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "./LanguageSelector";
 import { LogOut, LayoutDashboard, BarChart3, Home as HomeIcon, Trophy, Menu, X } from "lucide-react";
@@ -8,12 +8,13 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Navbar() {
     const { t } = useLanguage();
     const location = useLocation();
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const token = localStorage.getItem("token");
 
     const handleLogout = () => {
         localStorage.removeItem("token");
-        window.location.href = "/login";
+        navigate("/login");
     };
 
     const isActive = (path) => location.pathname === path;
