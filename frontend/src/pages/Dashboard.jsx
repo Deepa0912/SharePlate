@@ -4,6 +4,7 @@
 // Premium Tailwind-driven UI with AI food rescue intelligence.
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+const MISSION_BG = "/assets/mission-bg.png";
 import API from "../services/api";
 import NGOBadge from "../components/NGOBadge";
 import FoodClassifier from "../components/FoodClassifier";
@@ -33,19 +34,72 @@ const DashboardInput = ({ label, name, value, onChange, placeholder, icon, type 
   </div>
 );
 
-const QuickImpactStat = ({ label, value, color, bg, icon: Icon }) => (
-  <div className={`${bg} ${color} p-6 rounded-[2.5rem] border border-white/50 backdrop-blur-sm shadow-sm transition-all hover:scale-[1.03] group relative overflow-hidden`}>
-    <div className="absolute -right-2 -bottom-2 opacity-5 scale-150 rotate-12 transition-transform group-hover:rotate-0">
-      <Icon size={80} />
-    </div>
-    <div className="relative z-10">
-      <div className="text-3xl font-black mb-1 flex items-baseline gap-1">
-        {value}
-        <span className="text-xs opacity-50 px-1">MT</span>
+const AnimatedCounter = ({ value, duration = 1.5 }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(value) || 0;
+    if (start === end) return;
+
+    let timer = setInterval(() => {
+      start += Math.ceil(end / 30);
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(start);
+      }
+    }, duration * 33);
+
+    return () => clearInterval(timer);
+  }, [value, duration]);
+
+  return <>{count}</>;
+};
+
+const SuccessParticles = ({ active }) => (
+  <AnimatePresence>
+    {active && (
+      <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
+        {[...Array(20)].map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 1, scale: 0, x: 0, y: 0 }}
+            animate={{
+              opacity: 0,
+              scale: [0, 1.5, 0.5],
+              x: (Math.random() - 0.5) * 600,
+              y: (Math.random() - 0.5) * 600,
+              rotate: Math.random() * 360
+            }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            className="absolute"
+          >
+            {i % 3 === 0 ? "🥗" : i % 3 === 1 ? "🍎" : "✨"}
+          </motion.div>
+        ))}
       </div>
-      <div className="text-[10px] font-black uppercase tracking-widest opacity-70">{label}</div>
+    )}
+  </AnimatePresence>
+);
+
+const QuickImpactStat = ({ label, value, color, bg, icon: Icon }) => (
+  <motion.div
+    whileHover={{ y: -5, scale: 1.02 }}
+    className={`${bg} p-6 rounded-[2.5rem] border border-slate-100 hover:border-emerald-100 transition-all group`}
+  >
+    <div className="flex items-center justify-between mb-4">
+      <div className={`w-12 h-12 rounded-2xl bg-white flex items-center justify-center ${color} shadow-sm group-hover:shadow-md transition-all`}>
+        <Icon size={20} />
+      </div>
+      <div className="h-1 w-8 bg-slate-200/50 rounded-full group-hover:bg-emerald-500/20 transition-all"></div>
     </div>
-  </div>
+    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-2">{label}</div>
+    <div className={`text-2xl font-black ${color} tracking-tighter leading-none`}>
+      <AnimatedCounter value={value} />
+    </div>
+  </motion.div>
 );
 
 const TabButton = ({ active, onClick, children }) => (
@@ -84,8 +138,8 @@ const SustainabilityAnalytics = ({ data }) => (
         </div>
       </div>
 
-      <div className="h-[280px] w-full">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[280px] w-full min-w-0">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <AreaChart data={data}>
             <defs>
               <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
@@ -133,8 +187,8 @@ const SustainabilityAnalytics = ({ data }) => (
         </div>
       </div>
 
-      <div className="h-[280px] w-full relative z-10">
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="h-[280px] w-full relative z-10 min-w-0">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <BarChart data={data}>
             <XAxis
               dataKey="name"
@@ -245,6 +299,7 @@ function Dashboard() {
       setDonations(data);
       fetchNGORecommendations(data);
     } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   const fetchVolunteerShifts = async () => {
@@ -290,6 +345,8 @@ function Dashboard() {
     const data = new FormData(); Object.entries(formData).forEach(([k, v]) => data.append(k, v)); if (image) data.append("image", image);
     try {
       await API.post("/donate", data);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
       await customAlert("Your mission contribution has been accepted. Connecting to NGOs...", "Mission Launched");
       setFormData({ food_name: "", quantity: "", expiry_time: "", location: "", donor_id: currentUserEmail });
       setImage(null); fetchDonations();
@@ -340,8 +397,9 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-[#fafbfc] font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
       <Navbar />
+      <SuccessParticles active={showSuccess} />
 
-      <main className="max-w-[1400px] mx-auto px-6 py-12">
+      <main className="max-w-[1500px] mx-auto px-6 py-12 space-y-12 relative">
         <header className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] mb-4 border border-emerald-100/50">

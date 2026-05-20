@@ -11,7 +11,7 @@ import LanguageSelector from "../components/LanguageSelector";
 import { LogIn, Mail, Lock, ShieldCheck, Heart, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 
-const MISSION_BG = "file:///C:/Users/jagadeesh/.gemini/antigravity/brain/acd0790a-d5a0-4f13-a6fb-fa2302f21661/charity_mission_hero_1779297352151.png";
+const MISSION_BG = "/assets/mission-bg.png";
 
 function Login() {
   const navigate = useNavigate();
@@ -144,8 +144,8 @@ function Login() {
               type="submit"
               disabled={loading}
               className={`w-full py-5 rounded-[2rem] font-black text-lg transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-3 mt-10 ${loading
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "bg-slate-900 hover:bg-emerald-600 text-white shadow-slate-200"
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-slate-900 hover:bg-emerald-600 text-white shadow-slate-200"
                 }`}
             >
               {loading ? "Verifying..." : "Enter Mission Control"} <ArrowRight size={20} />

@@ -11,7 +11,7 @@ import LanguageSelector from "../components/LanguageSelector";
 import { ShieldAlert, Mail, Lock, Key, Settings, ArrowLeft, ArrowRight, CheckCircle, Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MISSION_BG = "file:///C:/Users/jagadeesh/.gemini/antigravity/brain/acd0790a-d5a0-4f13-a6fb-fa2302f21661/charity_mission_hero_1779297352151.png";
+const MISSION_BG = "/assets/mission-bg.png";
 
 function ForgotPassword() {
   const navigate = useNavigate();

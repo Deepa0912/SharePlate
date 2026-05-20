@@ -69,24 +69,44 @@ function Home() {
         <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-[500px] h-[500px] bg-amber-100/30 rounded-full blur-[120px] -z-10"></div>
       </div>
 
-      {/* Impact Stats - Sticky Visual */}
-      <div className="bg-slate-900 py-20 border-y border-white/5 relative overflow-hidden">
+      {/* Global Impact Vision Section */}
+      <div className="bg-slate-900 py-32 relative overflow-hidden">
         <div className="absolute inset-0 bg-emerald-500/5 blur-[120px]"></div>
-        <div className="max-w-6xl mx-auto px-6 grid md:grid-cols-3 gap-16 relative z-10">
-          {[
-            { val: "500+", label: t('stat_donations'), sub: "Verified Recoveries", icon: <Package className="w-5 h-5 text-emerald-400" /> },
-            { val: "120+", label: t('stat_ngos'), sub: "Partner Orphanages", icon: <Users className="w-5 h-5 text-amber-400" /> },
-            { val: "10K+", label: t('stat_meals'), sub: "Lives Nourished", icon: <Heart className="w-5 h-5 text-rose-400" /> },
-          ].map((s, i) => (
-            <div key={i} className="text-center group">
-              <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-white/10 group-hover:scale-110 transition-transform">
-                {s.icon}
-              </div>
-              <h3 className="text-6xl font-black text-white mb-2 tracking-tighter">{s.val}</h3>
-              <p className="text-emerald-400 font-black uppercase tracking-widest text-xs mb-2">{s.label}</p>
-              <p className="text-slate-500 text-sm font-medium">{s.sub}</p>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="text-center mb-24">
+            <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/5 border border-white/10 text-emerald-400 text-[10px] font-black tracking-[0.3em] uppercase mb-6">
+              📊 Global Live Pulse
             </div>
-          ))}
+            <h3 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-none">
+              Strategic <span className="text-emerald-400">Impact</span> 2030
+            </h3>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-12">
+            {[
+              { val: 124500, label: "Total Nutrients Rescued", unit: "kg", color: "text-emerald-400", sub: "Verified Recoveries", icon: <Package className="w-6 h-6" /> },
+              { val: 850, label: "Partner Social Hubs", unit: "+", color: "text-amber-400", sub: "NGOs & Orphanages", icon: <Users className="w-6 h-6" /> },
+              { val: 420, label: "Daily Active Heroes", unit: "Hero", color: "text-rose-400", sub: "Volunteers Manning the Grid", icon: <Heart className="w-6 h-6" /> },
+            ].map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="bg-white/5 backdrop-blur-md rounded-[3rem] p-12 border border-white/10 hover:border-emerald-500/30 transition-all group"
+              >
+                <div className={`w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8 ${s.color} border border-white/10 group-hover:scale-110 transition-transform`}>
+                  {s.icon}
+                </div>
+                <div className="flex items-baseline gap-2 mb-4">
+                  <h3 className={`text-6xl font-black tracking-tighter text-white`}>{s.val.toLocaleString()}</h3>
+                  <span className="text-lg font-black text-slate-500 opacity-50">{s.unit}</span>
+                </div>
+                <p className={`${s.color} font-black uppercase tracking-widest text-[10px] mb-2`}>{s.label}</p>
+                <p className="text-slate-500 text-sm font-medium leading-relaxed">{s.sub}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
 

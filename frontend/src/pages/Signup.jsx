@@ -11,14 +11,14 @@ import LanguageSelector from "../components/LanguageSelector";
 import { User, Heart, ShieldCheck, Mail, Lock, UserPlus, ArrowRight, Check } from "lucide-react";
 import { motion } from "framer-motion";
 
-const MISSION_BG = "file:///C:/Users/jagadeesh/.gemini/antigravity/brain/acd0790a-d5a0-4f13-a6fb-fa2302f21661/charity_mission_hero_1779297352151.png";
+const MISSION_BG = "/assets/mission-bg.png";
 
 const RoleCard = ({ id, label, icon: Icon, active, onClick }) => (
   <div
     onClick={() => onClick(id)}
     className={`relative p-6 rounded-[2rem] border-2 cursor-pointer transition-all duration-300 flex flex-col items-center gap-4 group ${active
-        ? "border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-500/10 scale-105"
-        : "border-slate-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/30"
+      ? "border-emerald-500 bg-emerald-50 shadow-lg shadow-emerald-500/10 scale-105"
+      : "border-slate-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/30"
       }`}
   >
     {active && (
@@ -182,8 +182,8 @@ function Signup() {
               type="submit"
               disabled={loading}
               className={`w-full py-6 rounded-[2.5rem] font-black text-xl transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-4 mt-8 ${loading
-                  ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                  : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
+                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-500/20"
                 }`}
             >
               {loading ? "Establishing Identity..." : "Finalize Enrollment"} <ArrowRight size={20} />
