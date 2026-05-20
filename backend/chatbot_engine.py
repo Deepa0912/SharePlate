@@ -29,15 +29,12 @@ def generate_chat_response(message: str, history: list, lang: str = "en") -> str
         return "⚠️ Gemini API key is missing. Please configure GEMINI_API_KEY."
 
     try:
-        # Build the model with fallback identifiers
-        model_names = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]
+        # Build the model with fallback identifiers (removing legacy 'gemini-pro')
+        model_names = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest"]
         model = None
-        
-        # We use the chat interface for history support
         chat = None
         
         # Prepare history for genai SDK
-        # genai expects: [{"role": "user", "parts": ["..."]}, {"role": "model", "parts": ["..."]}]
         formatted_history = []
         for msg in history:
             role = "user" if msg.get("role") == "user" else "model"
@@ -46,9 +43,10 @@ def generate_chat_response(message: str, history: list, lang: str = "en") -> str
         last_err = None
         for name in model_names:
             try:
+                # Initialize model with modern name
                 model = genai.GenerativeModel(
                     model_name=name,
-                    system_instruction=SYSTEM_PROMPT + f"\nRespond in {lang}."
+                    system_instruction=SYSTEM_PROMPT + f"\nRespond strictly in {lang}."
                 )
                 chat = model.start_chat(history=formatted_history)
                 response = chat.send_message(message)
@@ -58,7 +56,7 @@ def generate_chat_response(message: str, history: list, lang: str = "en") -> str
                 logger.warning(f"Chatbot model {name} failed: {e}")
                 continue
         
-        raise last_err or ValueError("All chatbot models failed")
+        raise last_err or ValueError("All safe chatbot models failed")
 
     except Exception as e:
         logger.error(f"Chatbot error: {e}")
