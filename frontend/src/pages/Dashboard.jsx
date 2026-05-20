@@ -4,13 +4,14 @@
 // Premium Tailwind-driven UI with AI food rescue intelligence.
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { Link } from "react-router-dom";
 const MISSION_BG = "/assets/mission-bg.png";
 import API from "../services/api";
 import NGOBadge from "../components/NGOBadge";
 import FoodClassifier from "../components/FoodClassifier";
 import { useLanguage } from "../context/LanguageContext";
 import Navbar from "../components/Navbar";
-import { Heart, Star, Package, MapPin, Search, Trash2, Clock, CheckCircle, ExternalLink, Calendar, Info, Trophy, Droplets, Leaf } from "lucide-react";
+import { Heart, Star, Package, MapPin, Search, Trash2, Clock, CheckCircle, ExternalLink, Calendar, Info, Trophy, Droplets, Leaf, TrendingUp, Users, ArrowRight, Table } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
