@@ -261,7 +261,18 @@ class NGO(BaseModel):
 
 @app.get("/")
 def home():
-    return {"message": "SharePlate Backend Running", "version": "2.0.0"}
+    try:
+        # Simple ping to verify DB connection
+        users_collection.database.command("ping")
+        db_status = "Connected"
+    except Exception as e:
+        db_status = f"Disconnected: {str(e)}"
+        
+    return {
+        "message": "SharePlate Backend Running",
+        "version": "2.0.0",
+        "db_status": db_status
+    }
 
 
 # ===========================================================================
