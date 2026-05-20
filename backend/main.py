@@ -190,7 +190,10 @@ app = FastAPI(title="SharePlate API", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],          # restrict to your domain in production
+    allow_origins=[
+        "http://localhost:5173",
+        "https://share-plate-ws37.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
