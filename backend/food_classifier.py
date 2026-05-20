@@ -90,11 +90,14 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
         }
         
     except Exception as e:
-        logger.error(f"[food_classifier] Gemini error: {e}")
+        error_msg = str(e)
+        logger.error(f"[food_classifier] Gemini error: {error_msg}")
+        
+        # We return the error in 'food_name' so it's visible in the UI
         return {
-            "food_name": "Food Item",
-            "confidence": 30,
-            "label_raw": "unknown",
+            "food_name": f"AI Error: {error_msg[:50]}...",
+            "confidence": 0,
+            "label_raw": "error",
             "top_predictions": [],
-            "is_food": True,
+            "is_food": False,
         }
