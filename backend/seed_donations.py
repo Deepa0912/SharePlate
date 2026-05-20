@@ -51,12 +51,6 @@ MOCK_LOCATIONS = [
 ]
 
 def seed_donations():
-    # Clear existing donations to have a fresh, predictable timeline for beautiful graphs
-    count_before = donations_collection.count_documents({})
-    if count_before > 5:
-        print(f"[seed_donations] Already found {count_before} donations. Skipping seed.")
-        return
-
     print("Seeding realistic historical donations...")
     
     now = datetime.utcnow()

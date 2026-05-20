@@ -40,21 +40,26 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
         model = genai.GenerativeModel("gemini-1.5-flash")
         
         prompt = """
-        Analyze this food image and return a JSON object with:
-        1. 'food_name': The specific name of the food (e.g., 'Paneer Tikka', 'Pasta Carbonara').
-        2. 'confidence': A number between 0 and 100 representing how sure you are.
-        3. 'is_food': A boolean indicating if this is actually a food item.
+        You are an expert food nutritionist and chef. 
+        Analyze the provided image and return a JSON object with:
+        1. 'food_name': A clear, specific name for the dish (e.g., 'Fresh Pepperoni Pizza', 'Vegetable Biryani').
+        2. 'confidence': A number (0-100) reflecting your certainty.
+        3. 'is_food': true if the image contains food, false otherwise.
+        4. 'category': One of ['Grain', 'Protein', 'Vegetable', 'Fruit', 'Dairy', 'Cooked Meal', 'Snack'].
+        5. 'health_score': (0-10) based on nutritional value.
         
-        Return ONLY the JSON.
+        Return ONLY valid JSON. No conversational text.
         """
         
-        # Prepare parts
-        parts = [
+        # Determine format (simple check or default to jpeg)
+        # Note: image_bytes is usually passed as-is to Gemini and it handles it well, 
+        # but specifying the part correctly is better.
+        
+        response = model.generate_content([
             {"mime_type": "image/jpeg", "data": image_bytes},
             prompt
-        ]
+        ])
         
-        response = model.generate_content(parts)
         text = response.text.strip()
         
         # Clean potential markdown formatting
@@ -65,12 +70,23 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
             
         data = json.loads(text)
         
+        # If not food, return a clear 'Not Food' label
+        if not data.get("is_food", True):
+            return {
+                "food_name": "Non-food item detected",
+                "confidence": data.get("confidence", 90),
+                "label_raw": "not_food",
+                "top_predictions": [],
+                "is_food": False,
+            }
+
         return {
             "food_name": data.get("food_name", "Unknown Food"),
-            "confidence": data.get("confidence", 50),
-            "label_raw": data.get("food_name", "unknown").lower().replace(" ", "_"),
-            "top_predictions": [], # Simplified for Gemini
-            "is_food": data.get("is_food", True),
+            "confidence": data.get("confidence", 85),
+            "label_raw": data.get("food_name", "food").lower().replace(" ", "_"),
+            "category": data.get("category", "Cooked Meal"), # New helpful field
+            "top_predictions": [], 
+            "is_food": True,
         }
         
     except Exception as e:
