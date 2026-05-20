@@ -195,9 +195,10 @@ ORGS = [
     "https://shareplate-frontend-rq1v.onrender.com",
 ]
 
+# Use Regex to allow ALL Render subdomains and local development
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORGS,
+    allow_origin_regex=r"https://.*\.onrender\.com|http://localhost:.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
