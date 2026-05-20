@@ -188,12 +188,15 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict], all_donations:
 
 app = FastAPI(title="SharePlate API", version="2.0.0")
 
+# Whitelist: Localhost, fixed Vercel domain, and any Vercel dynamic domains (*.vercel.app)
+ORGS = [
+    "http://localhost:5173",
+    "https://share-plate-ws37.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://share-plate-ws37.vercel.app",
-    ],
+    allow_origins=ORGS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
