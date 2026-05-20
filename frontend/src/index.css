@@ -1,23 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary-color: #059669; /* emerald-600 */
-  --primary-hover: #047857; /* emerald-700 */
-  --bg-gradient-from: #f8fafc; /* slate-50 */
-  --bg-gradient-via: #f1f5f9;  /* slate-100 */
-  --bg-gradient-to: #ecfdf5;   /* emerald-50 */
-  --bg-light: #ffffff; 
-  --bg-light-gradient-from: #f0fdf4; /* green-50 */
-  --bg-light-gradient-to: #ffffff;
+  --primary-color: #059669;
+  /* emerald-600 */
+  --primary-hover: #047857;
+  /* emerald-700 */
+  --secondary-color: #f59e0b;
+  /* amber-500 */
+  --bg-gradient-from: #ffffff;
+  --bg-gradient-via: #f8fafc;
+  --bg-gradient-to: #f0fdf4;
+  --bg-light: #ffffff;
+  --bg-light-gradient-from: #ffffff;
+  --bg-light-gradient-to: #f0fdf4;
   --text-primary: #059669;
-  --border-primary: #e2e8f0; /* slate-200 */
-  --navbar-color: rgba(255, 255, 255, 0.9);
-  --accent-color: #10b981; /* emerald-500 */
-  --card-bg: #ffffff;
-  --text-dark: #1e293b; /* slate-800 */
-  --text-light: #475569; /* slate-600 */
+  --text-header: #0f172a;
+  /* slate-900 */
+  --text-body: #334155;
+  /* slate-700 */
+  --border-primary: #f1f5f9;
+  --navbar-color: rgba(255, 255, 255, 0.95);
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+.brand-font {
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-header);
 }
 
 /* Theme helper classes for crisp light theme */
