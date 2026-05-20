@@ -155,10 +155,9 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict], all_donations:
 
     route_text = None
     if recommended and recommended.get("name"):
-        route_text = (
-            f"Pickup from {donation.get('location', 'donor location')} "
-            f"and deliver to {recommended['name']} ({recommended.get('distance_km', 'N/A')} km)"
-        )
+        dist = recommended.get("distance_km")
+        dist_str = f"({dist} km)" if dist else ""
+        route_text = f"{recommended['name']} {dist_str}".strip()
 
     return {
         "id": str(donation.get("_id", "")),
@@ -635,31 +634,38 @@ def get_volunteer_shifts(max_results: int = 3):
     all_ngos = list(ngos_collection.find({"active": True}))
     shifts = []
 
-    for donation in donations_collection.find({"status": {"$in": ["Pending", "Available", "Approved", None]}}):
-        payload = _build_donation_payload(donation, all_ngos)
-        if payload["spoilage"]["urgency_level"] in ["HIGH", "MEDIUM"]:
-            shifts.append({
-                "id": payload["id"],
-                "food_name": payload["food_name"],
-                "quantity": payload["quantity"],
-                "location": payload["location"],
-                "urgency_level": payload["spoilage"]["urgency_level"],
-                "spoilage_label": payload["spoilage"]["spoilage_label"],
-                "recommended_ngo": payload["recommended_ngo"],
-                "pickup_route": payload["pickup_route"],
-                "created_at": payload["created_at"],
-                "spoilage_score": payload["spoilage"]["spoilage_score"],
-            })
+    try:
+        for donation in donations_collection.find({"status": {"$in": ["Pending", "Available", "Approved", None]}}):
+            try:
+                payload = _build_donation_payload(donation, all_ngos)
+                if payload["spoilage"]["urgency_level"] in ["HIGH", "MEDIUM"]:
+                    shifts.append({
+                        "id": payload["id"],
+                        "food_name": payload["food_name"],
+                        "quantity": payload["quantity"],
+                        "location": payload["location"],
+                        "urgency_level": payload["spoilage"]["urgency_level"],
+                        "spoilage_label": payload["spoilage"]["spoilage_label"],
+                        "recommended_ngo": payload["recommended_ngo"],
+                        "pickup_route": payload["pickup_route"],
+                        "created_at": payload["created_at"],
+                        "spoilage_score": payload["spoilage"]["spoilage_score"],
+                    })
+            except Exception as e:
+                print(f"[SHIFT ERROR] Skipping donation {donation.get('_id')}: {e}")
+                continue
 
-    shifts.sort(
-        key=lambda s: (
-            0 if s["urgency_level"] == "HIGH" else 1,
-            s["recommended_ngo"]["distance_km"] if s["recommended_ngo"] else 999,
-            s["created_at"],
+        shifts.sort(
+            key=lambda s: (
+                0 if s["urgency_level"] == "HIGH" else 1,
+                (s["recommended_ngo"].get("distance_km") if (s["recommended_ngo"] and isinstance(s["recommended_ngo"], dict)) else 999) or 999,
+                s["created_at"] or "",
+            )
         )
-    )
-
-    return {"shifts": shifts[:max_results]}
+        return {"shifts": shifts[:max_results]}
+    except Exception as exc:
+        print(f"CRITICAL VOLUNTEER_SHIFTS ERROR: {exc}")
+        return {"shifts": [], "error": str(exc)}
 
 
 @app.get("/donation/{donation_id}/postcard")
