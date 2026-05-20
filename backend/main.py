@@ -272,7 +272,7 @@ def home():
         
     return {
         "message": "Welcome to SharePlate: Eradicating Hunger in India",
-        "mission": "Recovering surplus food from weddings, hotels, and restaurants using AI (Version 2.2.0)",
+        "mission": "Recovering surplus food from weddings, hotels, and restaurants using AI (Version 2.4.0)",
         "db_status": db_status
     }
 

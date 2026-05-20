@@ -64,10 +64,10 @@ export default function Chatbot() {
 
     const recognition = new SpeechRecognition();
     recognition.lang = lang === "kn" ? "kn-IN"
-                      : lang === "hi" ? "hi-IN"
-                      : lang === "ta" ? "ta-IN"
-                      : lang === "te" ? "te-IN"
-                      : "en-IN";
+      : lang === "hi" ? "hi-IN"
+        : lang === "ta" ? "ta-IN"
+          : lang === "te" ? "te-IN"
+            : "en-IN";
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     recognition.continuous = false;
@@ -128,7 +128,12 @@ export default function Chatbot() {
         content: msg.content,
       }));
 
-      const response = await axios.post("http://localhost:8000/chat", {
+      // Determine the API base URL dynamically
+      const API_BASE_URL = window.location.hostname === "localhost"
+        ? "http://localhost:8000"
+        : window.location.origin;
+
+      const response = await axios.post(`${API_BASE_URL}/chat`, {
         message: userMsg,
         history,
         lang,
@@ -199,22 +204,20 @@ export default function Chatbot() {
                   key={idx}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${
-                    msg.role === "user" ? "justify-end" : "justify-start"
-                  } items-end gap-2`}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"
+                    } items-end gap-2`}
                 >
                   {msg.role === "model" && (
                     <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
                       <Bot className="w-3.5 h-3.5 text-emerald-600" />
                     </div>
                   )}
-                  
+
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                      msg.role === "user"
+                    className={`max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ${msg.role === "user"
                         ? "bg-emerald-600 text-white rounded-br-none"
                         : "bg-white border border-gray-100 text-gray-800 rounded-bl-none"
-                    }`}
+                      }`}
                   >
                     {msg.content}
                   </div>
@@ -289,11 +292,10 @@ export default function Chatbot() {
                 onClick={isListening ? stopListening : startListening}
                 disabled={isLoading}
                 title={isListening ? "Stop listening" : "Speak a command"}
-                className={`rounded-full p-2.5 flex items-center justify-center transition-all ${
-                  isListening
+                className={`rounded-full p-2.5 flex items-center justify-center transition-all ${isListening
                     ? "bg-red-500 hover:bg-red-600 text-white ring-4 ring-red-200 animate-pulse"
                     : "bg-gray-100 hover:bg-emerald-100 text-gray-500 hover:text-emerald-700"
-                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                  } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               </button>

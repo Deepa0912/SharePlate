@@ -14,6 +14,7 @@ import NGOBadge from "../components/NGOBadge";
 import FoodClassifier from "../components/FoodClassifier";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "../components/LanguageSelector";
+import Navbar from "../components/Navbar";
 
 // Minimum confidence (%) for AI to auto-fill the food name field
 const AUTO_FILL_THRESHOLD = 80;
@@ -435,35 +436,7 @@ function Dashboard() {
   return (
     <div style={S.page}>
 
-      {/* ── Navbar ──────────────────────────────────────────────────────── */}
-      <nav style={S.navbar}>
-        <div style={S.navBrand}>
-          <span style={S.navLogo}>🍽️</span>
-          <h1 style={S.navTitle}>{t('brand')}</h1>
-          <span style={S.navBadge}>{t('dashboard')}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <LanguageSelector />
-          <Link
-            to="/analytics"
-            style={{
-              background: "#f1f5f9",
-              color: "#334155",
-              textDecoration: "none",
-              border: "1px solid #cbd5e1",
-              borderRadius: "10px",
-              padding: "8px 16px",
-              fontWeight: "600",
-              fontSize: "13px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-            }}
-          >
-            📊 {t('analytics')}
-          </Link>
-          <button onClick={handleLogout} style={S.logoutBtn}>{t('logout')}</button>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* ── Donation Form ────────────────────────────────────────────────── */}
       <section style={S.formCard}>
