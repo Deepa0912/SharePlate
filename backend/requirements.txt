@@ -22,7 +22,7 @@ bcrypt==5.0.0
 PyJWT==2.12.1
 
 # ── AI / ML (food classifier) ────────────────────────────────────────────────
-tensorflow-cpu              # switching to CPU-only for smaller footprint and better cloud compatibility
+tensorflow-cpu==2.16.2
 numpy>=1.26.0,<3.0          # compatible with TF 2.21
 pillow>=10.0.0              # image I/O (JPEG, PNG, WEBP, BMP)
 
