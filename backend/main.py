@@ -552,29 +552,30 @@ async def donate_food(
 
 @app.get("/donations")
 def get_donations():
-    """
-    Fetch all donations from MongoDB.
-    Returns enriched donation objects with AI recommendations, spoilage forecasts, meal suggestions, and pickup routing.
-    Congratulations: this endpoint now powers unique SharePlate features.
-    """
-
-    priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
-    all_ngos = list(ngos_collection.find({"active": True}))
-    raw_donations = list(donations_collection.find())
-
-    donations = [
-        _build_donation_payload(donation, all_ngos, raw_donations)
-        for donation in raw_donations
-    ]
-
-    donations.sort(
-        key=lambda d: (
-            priority_order.get(d["priority"], 1),
-            d["created_at"],
+    """Fetch all donations with error handling."""
+    try:
+        priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+        all_ngos = list(ngos_collection.find({"active": True}))
+        raw_donations = list(donations_collection.find())
+        
+        donations = []
+        for donation in raw_donations:
+            try:
+                donations.append(_build_donation_payload(donation, all_ngos, raw_donations))
+            except Exception as e:
+                print(f"[FETCH ERROR] Failed build for {donation.get('_id')}: {e}")
+                continue # Skip broken ones for now
+                
+        donations.sort(
+            key=lambda d: (
+                priority_order.get(d["priority"], 1),
+                d["created_at"],
+            )
         )
-    )
-
-    return donations
+        return donations
+    except Exception as exc:
+        print(f"CRITICAL GET_DONATIONS ERROR: {exc}")
+        raise HTTPException(status_code=500, detail=f"Failed to load donations: {str(exc)}")
 
 
 # ===========================================================================
