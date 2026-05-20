@@ -87,16 +87,24 @@ def generate_chat_response(message: str, history: list, lang: str = "en") -> str
             )
         )
 
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=formatted_history,
-            config=types.GenerateContentConfig(
-                system_instruction=dynamic_system,
-                temperature=0.7,
-            ),
-        )
-
-        return response.text
+        # Robust multi-model trial
+        last_err = None
+        for model_name in ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]:
+            try:
+                response = client.models.generate_content(
+                    model=model_name,
+                    contents=formatted_history,
+                    config=types.GenerateContentConfig(
+                        system_instruction=dynamic_system,
+                        temperature=0.7,
+                    ),
+                )
+                return response.text
+            except Exception as e:
+                last_err = e
+                continue
+        
+        raise last_err or ValueError("All chatbot models failed")
 
     except Exception as e:
         return f"Sorry, I encountered an error: {str(e)}"
