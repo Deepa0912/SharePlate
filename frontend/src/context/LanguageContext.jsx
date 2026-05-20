@@ -45,6 +45,7 @@ const translations = {
     feat_subtitle: "Building the technology to end hunger collectively.",
     cta_title: "Ready to join the mission?",
     cta_desc: "Your contribution, whether as a donor or volunteer, helps feed India's future.",
+    btn_start: "Get Started",
 
     // Login Page
     login_title: "Login",
@@ -148,6 +149,7 @@ const translations = {
     feat_subtitle: "ಹಸಿವನ್ನು ಒಟ್ಟಾಗಿ ಕೊನೆಗಾಣಿಸಲು ತಂತ್ರಜ್ಞಾನವನ್ನು ನಿರ್ಮಿಸುವುದು.",
     cta_title: "ಮಿಷನ್ ಸೇರಲು ಸಿದ್ಧರಿದ್ದೀರಾ?",
     cta_desc: "ನಿಮ್ಮ ಕೊಡುಗೆ ಮದುವೆ ಫೋಟೋದಂತೆಯೇ ಸುಲಭ, ಆದರೆ ಅದರ ಪ್ರಭಾವ ಬಹಳ ದೊಡ್ಡದು.",
+    btn_start: "ಪ್ರಾರಂಭಿಸಿ",
 
     // Login Page
     login_title: "ಲಾಗಿನ್",
@@ -250,7 +252,8 @@ const translations = {
     feat_title: "स्मार्ट फीचर्स",
     feat_subtitle: "सामाजिक भलाई के लिए उन्नत तकनीक।",
     cta_title: "क्या आप प्रभाव डालने के लिए तैयार हैं?",
-    cta_desc: "हर दान मायने रखता है। आज ही भूख के खिलाफ लड़ाई में शामिल हों।",
+    cta_desc: "हर दान मायने रखता है। आज ही भूख के खिलाफ लड़ाई में शामिल हों.",
+    btn_start: "शुरू करें",
 
     // Login Page
     login_title: "लॉगिन",
@@ -354,6 +357,7 @@ const translations = {
     feat_subtitle: "பசியை கூட்டாக முடிவுக்குக் கொண்டுவருவதற்கான தொழில்நுட்பத்தை உருவாக்குதல்.",
     cta_title: "மிஷனில் இணையத் தயாரா?",
     cta_desc: "உங்கள் பங்களிப்பு இந்தியாவின் எதிர்காலத்திற்கு உணவளிக்க உதவுகிறது. இன்று பசிக்கு எதிரான போராட்டத்தில் சேருங்கள்.",
+    btn_start: "தொடங்குங்கள்",
 
     // Login Page
     login_title: "உள்நுழை",
@@ -457,6 +461,7 @@ const translations = {
     feat_subtitle: "సామాజిక మేలు కోసం అధునాతన సాంకేతికత.",
     cta_title: "మార్పు తీసుకురావడానికి సిద్ధంగా ఉన్నారా?",
     cta_desc: "ప్రతి దానం ముఖ్యం. ఆకలిపై పోరాటంలో ఈరోజే వందలాది మందితో చేరండి.",
+    btn_start: "మొదలుపెట్టండి",
 
     // Login Page
     login_title: "లాగిన్",

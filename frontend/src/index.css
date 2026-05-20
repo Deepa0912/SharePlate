@@ -4,6 +4,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-slow {
+  animation: marquee 40s linear infinite;
+}
+
 /* ── Global Scrollbar Synergy ────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 8px;

@@ -24,34 +24,97 @@ function Home() {
     <div className="min-h-screen bg-white font-sans selection:bg-emerald-100 selection:text-emerald-900 overflow-x-hidden">
       <Navbar />
 
-      {/* Hero Section */}
-      <div className="relative overflow-hidden pt-20 pb-32 px-6">
+      {/* Hero Section - Upgraded Aesthetics */}
+      <div className="relative overflow-visible pt-24 pb-40 px-6">
+        {/* Dynamic Background Elements */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl -z-10 pointer-events-none">
+          <motion.div
+            animate={{
+              scale: [1, 1.1, 1],
+              opacity: [0.3, 0.5, 0.3],
+              rotate: [0, 10, 0]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-20 -right-20 w-[600px] h-[600px] bg-emerald-100/50 rounded-full blur-[120px]"
+          />
+          <motion.div
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.2, 0.4, 0.2],
+              x: [0, 50, 0]
+            }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-1/2 -left-40 w-[500px] h-[500px] bg-amber-100/40 rounded-full blur-[120px]"
+          />
+        </div>
+
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-black tracking-widest uppercase mb-10 shadow-sm">
-            <Star className="w-3.5 h-3.5 fill-current" /> {t('mission_banner')}
-          </div>
-          <h2 className="text-6xl md:text-8xl font-black text-slate-900 leading-[1.05] mb-8 tracking-tighter">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-800 text-[10px] font-black tracking-[0.3em] uppercase mb-12 shadow-sm"
+          >
+            <Star className="w-3.5 h-3.5 fill-emerald-500 text-emerald-500" /> {t('mission_banner')}
+          </motion.div>
+
+          <motion.h2
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-6xl md:text-9xl font-black text-slate-900 leading-[0.95] mb-10 tracking-tighter"
+          >
             {t('hero_title1')}
             <br />
             <span className="text-transparent bg-clip-text" style={{ backgroundImage: "linear-gradient(135deg, #059669, #10b981)" }}>
               {t('hero_title2')}
             </span>
-          </h2>
-          <p className="text-xl md:text-2xl text-slate-500 max-w-3xl leading-relaxed mb-12 font-medium">
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-xl md:text-3xl text-slate-500 max-w-4xl leading-relaxed mb-16 font-medium"
+          >
             {t('hero_desc')}
-          </p>
-          <div className="flex flex-wrap justify-center gap-6">
-            <Link to="/signup" className="group px-12 py-5 text-lg font-black text-white rounded-2xl shadow-2xl shadow-emerald-200 hover:shadow-emerald-300 transition-all hover:-translate-y-1 active:scale-95 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #059669, #047857)" }}>
-              {t('btn_start')} <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-2" />
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="flex flex-wrap justify-center gap-8"
+          >
+            <Link to="/signup" className="group px-14 py-6 text-xl font-black text-white rounded-3xl shadow-2xl shadow-emerald-200 hover:shadow-emerald-400 transition-all hover:-translate-y-2 active:scale-95 flex items-center gap-4" style={{ background: "linear-gradient(135deg, #059669, #047857)" }}>
+              {t('btn_start')} <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-3" />
             </Link>
-            <Link to="/analytics" className="px-12 py-5 text-lg font-black border-2 border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-slate-700 flex items-center gap-3">
-              <TrendingUp className="w-5 h-5" /> View Impact
+            <Link to="/analytics" className="px-14 py-6 text-xl font-black border-4 border-slate-100 rounded-3xl hover:bg-slate-50 hover:border-slate-200 transition-all text-slate-700 flex items-center gap-4">
+              <TrendingUp className="w-6 h-6 text-emerald-600" /> View Impact
             </Link>
-          </div>
+          </motion.div>
         </div>
-        {/* Background blobs */}
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[500px] h-[500px] bg-emerald-100/40 rounded-full blur-[120px] -z-10 animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 translate-y-1/2 -translate-x-1/4 w-[500px] h-[500px] bg-amber-100/30 rounded-full blur-[120px] -z-10"></div>
+      </div>
+
+      {/* Strategic Live Pulse Bar */}
+      <div className="bg-emerald-50/50 border-y border-emerald-100 py-6 overflow-hidden flex whitespace-nowrap">
+        <div className="animate-marquee-slow flex gap-20 items-center">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="flex gap-20 items-center">
+              <span className="text-emerald-700 font-black text-sm tracking-widest uppercase flex items-center gap-2">
+                <Heart className="w-4 h-4 fill-emerald-500" /> RESCUING FRESH NUTRIENTS
+              </span>
+              <span className="text-emerald-700 font-black text-sm tracking-widest uppercase flex items-center gap-2">
+                <Users className="w-4 h-4 fill-emerald-500" /> 120+ NGO PARTNERS ON GRID
+              </span>
+              <span className="text-emerald-700 font-black text-sm tracking-widest uppercase flex items-center gap-2">
+                <Star className="w-4 h-4 fill-emerald-500" /> NATIONAL FOOD RECOVERY MOVEMENT
+              </span>
+              <span className="text-emerald-700 font-black text-sm tracking-widest uppercase flex items-center gap-2">
+                <Package className="w-4 h-4 fill-emerald-500" /> 10K+ LIVES NOURISHED
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Global Impact Vision Section */}
