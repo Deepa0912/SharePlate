@@ -271,8 +271,9 @@ def home():
         db_status = f"Disconnected: {str(e)}"
         
     return {
-        "message": "SharePlate Backend Running",
-        "version": "2.1.0",
+        "message": "SharePlate Backend: Feeding the Hungry & Supporting Orphanages",
+        "mission": "Connecting surplus food with those in need using AI-powered logistics.",
+        "version": "2.1.2",
         "db_status": db_status
     }
 
