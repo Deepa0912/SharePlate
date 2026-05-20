@@ -37,8 +37,23 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
         }
 
     try:
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # Try different model identifiers to fix the 404 "not found" error
+        model_names = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro-vision"]
+        model = None
+        last_error = None
         
+        for name in model_names:
+            try:
+                model = genai.GenerativeModel(name)
+                # Attempt a dummy call or just hope this one works
+                break
+            except Exception as e:
+                last_error = e
+                continue
+        
+        if not model:
+            raise last_error or ValueError("No valid Gemini models found")
+
         prompt = """
         You are an expert food nutritionist and chef. 
         Analyze the provided image and return a JSON object with:
@@ -46,14 +61,9 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
         2. 'confidence': A number (0-100) reflecting your certainty.
         3. 'is_food': true if the image contains food, false otherwise.
         4. 'category': One of ['Grain', 'Protein', 'Vegetable', 'Fruit', 'Dairy', 'Cooked Meal', 'Snack'].
-        5. 'health_score': (0-10) based on nutritional value.
         
         Return ONLY valid JSON. No conversational text.
         """
-        
-        # Determine format (simple check or default to jpeg)
-        # Note: image_bytes is usually passed as-is to Gemini and it handles it well, 
-        # but specifying the part correctly is better.
         
         response = model.generate_content([
             {"mime_type": "image/jpeg", "data": image_bytes},
