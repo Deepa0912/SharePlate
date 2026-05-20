@@ -67,6 +67,8 @@ def compute_analytics(donations: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
     total_donations = len(donations)
     total_meals = 0.0
+    total_co2_saved = 0.0
+    total_water_saved = 0.0
     
     # Categorization structures
     food_counter = Counter()
@@ -82,7 +84,13 @@ def compute_analytics(donations: List[Dict[str, Any]]) -> Dict[str, Any]:
         qty = d.get("quantity", "")
         total_meals += parse_meals_saved(qty)
 
-        # 2. Top foods (normalized to Title case)
+        # 2. Eco Impact accumulation
+        eco = d.get("eco_impact", {})
+        if eco:
+            total_co2_saved += eco.get("co2_saved_kg", 0.0)
+            total_water_saved += eco.get("water_saved_liters", 0.0)
+
+        # 3. Top foods (normalized to Title case)
         food_name = d.get("food_name", "Unknown Food").strip().title()
         if food_name:
             food_counter[food_name] += 1
@@ -140,6 +148,8 @@ def compute_analytics(donations: List[Dict[str, Any]]) -> Dict[str, Any]:
             "total_donations": total_donations,
             "meals_saved": round(total_meals),
             "active_locations": len(location_counter),
+            "total_co2_saved_kg": round(total_co2_saved, 1),
+            "total_water_saved_liters": round(total_water_saved),
         },
         "monthly_trends": trend_list,
         "top_foods": top_foods,

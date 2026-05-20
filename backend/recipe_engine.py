@@ -260,6 +260,34 @@ RECIPE_DATABASE = {
 }
 
 # ---------------------------------------------------------------------------
+# Meal Kit Recipes (Recipes that combine multiple core ingredients)
+# ---------------------------------------------------------------------------
+
+MEAL_KIT_DATABASE = [
+    {
+        "recipe_name": "Poor Man's Feast (Dal Khichdi)",
+        "description": "A complete, nutritious meal combining rice and lentils.",
+        "ingredients": ["rice", "dal"],
+        "complementary": "Rice needs Dal, and Dal needs Rice.",
+        "emoji": "🍲"
+    },
+    {
+        "recipe_name": "Aloo Gobhi / Mixed Sabzi",
+        "description": "Pairing potatoes with other seasonal vegetables.",
+        "ingredients": ["potato", "vegetables"],
+        "complementary": "Potatoes pair perfectly with any greens or cauliflower.",
+        "emoji": "🥦"
+    },
+    {
+        "recipe_name": "Paneer Butter Masala with Roti",
+        "description": "A premium protein-rich meal pairing dairy with wheat.",
+        "ingredients": ["paneer", "roti"],
+        "complementary": "Paneer is best served with fresh Rotis or Chapati.",
+        "emoji": "🍛"
+    }
+]
+
+# ---------------------------------------------------------------------------
 # Food keyword → recipe category mapper
 # ---------------------------------------------------------------------------
 
@@ -402,3 +430,32 @@ def suggest_recipes(food_name: str, quantity: str) -> list[dict]:
         })
 
     return results
+
+
+def find_meal_kit_match(food_name: str, other_donations: list[dict]) -> list[dict]:
+    """
+    Search for complementary items in other donations to form a 'Meal Kit'.
+    Returns a list of matching kits.
+    """
+    food_lower = food_name.lower()
+    matches = []
+
+    for kit in MEAL_KIT_DATABASE:
+        # Check if the current food is part of the kit
+        if any(ing in food_lower for ing in kit["ingredients"]):
+            # Find the required complementary ingredients
+            needed = [ing for ing in kit["ingredients"] if ing not in food_lower]
+            
+            # Look for needed ingredients in other donations
+            for donation in other_donations:
+                other_name = donation.get("food_name", "").lower()
+                if any(need in other_name for need in needed):
+                    matches.append({
+                        "kit_name": kit["recipe_name"],
+                        "description": kit["description"],
+                        "complementary_item": donation.get("food_name"),
+                        "complementary_id": str(donation.get("_id", "")),
+                        "emoji": kit["emoji"],
+                        "message": kit["complementary"]
+                    })
+    return matches

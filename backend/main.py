@@ -16,7 +16,9 @@ from analytics_engine import compute_analytics         # <-- Analytics engine
 from chatbot_engine import generate_chat_response      # <-- AI Chatbot engine
 from deep_translator import GoogleTranslator          # <-- Deep Translator
 from karma_engine import compute_user_karma, build_leaderboard  # <-- Karma engine
-from recipe_engine import suggest_recipes              # <-- AI Recipe engine
+from recipe_engine import suggest_recipes, find_meal_kit_match  # <-- AI Recipe engine
+from eco_engine import calculate_eco_impact            # <-- Eco engine
+from postcard_engine import generate_impact_postcard   # <-- Postcard engine
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
@@ -115,7 +117,7 @@ def _build_spoilage_info(food_name: str, expiry_time: str, created_at: str) -> d
     }
 
 
-def _build_donation_payload(donation: dict, all_ngos: list[dict]) -> dict:
+def _build_donation_payload(donation: dict, all_ngos: list[dict], all_donations: list[dict] = []) -> dict:
     priority = donation.get("priority") or predict_priority(
         food_name=donation.get("food_name", ""),
         quantity=donation.get("quantity", "0"),
@@ -141,6 +143,16 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict]) -> dict:
         donation.get("quantity", "0"),
     )
 
+    eco_impact = donation.get("eco_impact") or calculate_eco_impact(
+        donation.get("food_name", ""),
+        donation.get("quantity", "0"),
+    )
+
+    meal_kits = find_meal_kit_match(
+        donation.get("food_name", ""),
+        [d for d in all_donations if str(d.get("_id")) != str(donation.get("_id"))]
+    )
+
     route_text = None
     if recommended and recommended.get("name"):
         route_text = (
@@ -164,7 +176,9 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict]) -> dict:
         "created_at": donation.get("created_at", ""),
         "recommended_ngo": recommended,
         "meal_suggestions": meal_suggestions,
+        "meal_kits": meal_kits,
         "spoilage": spoilage,
+        "eco_impact": eco_impact,
         "pickup_route": route_text,
     }
 
@@ -476,6 +490,7 @@ async def donate_food(
     # --- Build donation document ---
     meal_suggestions = suggest_recipes(food_name, quantity)
     spoilage = _build_spoilage_info(food_name, expiry_time, datetime.utcnow().isoformat())
+    eco_impact = calculate_eco_impact(food_name, quantity)
 
     donation = {
         "food_name":        food_name,
@@ -489,6 +504,7 @@ async def donate_food(
         "created_at":       datetime.utcnow().isoformat(),
         "meal_suggestions": meal_suggestions,
         "spoilage":         spoilage,
+        "eco_impact":       eco_impact,
         "urgency_level":    spoilage["urgency_level"],
     }
 
@@ -502,6 +518,7 @@ async def donate_food(
         "urgency_level":     spoilage["urgency_level"],
         "spoilage_label":    spoilage["spoilage_label"],
         "meal_suggestions":  meal_suggestions,
+        "eco_impact":        eco_impact,
     }
 
 
@@ -519,10 +536,11 @@ def get_donations():
 
     priority_order = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
     all_ngos = list(ngos_collection.find({"active": True}))
+    raw_donations = list(donations_collection.find())
 
     donations = [
-        _build_donation_payload(donation, all_ngos)
-        for donation in donations_collection.find()
+        _build_donation_payload(donation, all_ngos, raw_donations)
+        for donation in raw_donations
     ]
 
     donations.sort(
@@ -617,6 +635,35 @@ def get_volunteer_shifts(max_results: int = 3):
     )
 
     return {"shifts": shifts[:max_results]}
+
+
+@app.get("/donation/{donation_id}/postcard")
+def get_donation_postcard(donation_id: str):
+    """
+    Generate an AI impact postcard for a specific donation.
+    """
+    query = {}
+    try:
+        query = {"_id": ObjectId(donation_id)}
+        donation = donations_collection.find_one(query)
+    except Exception:
+        donation = None
+
+    if not donation:
+        donation = donations_collection.find_one({"_id": donation_id})
+
+    if not donation:
+        raise HTTPException(status_code=404, detail="Donation not found")
+
+    # Ensure eco_impact exists
+    if "eco_impact" not in donation:
+        donation["eco_impact"] = calculate_eco_impact(
+            donation.get("food_name", ""),
+            donation.get("quantity", "0")
+        )
+
+    postcard = generate_impact_postcard(donation)
+    return postcard
 
 
 # ===========================================================================
@@ -824,6 +871,14 @@ def chat_endpoint(req: ChatRequest):
         return {"response": response_text}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
 
 
 class TranslateRequest(BaseModel):

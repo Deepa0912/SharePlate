@@ -21,7 +21,7 @@ const AUTO_FILL_THRESHOLD = 80;
 // Robust countdown duration parser and dynamic expiry utility
 const getDynamicExpiry = (createdTimeIso, expiryString) => {
   if (!createdTimeIso) return { label: expiryString, isExpired: false, percentRemaining: 100 };
-  
+
   try {
     const createdTime = new Date(createdTimeIso);
     const now = new Date();
@@ -33,7 +33,7 @@ const getDynamicExpiry = (createdTimeIso, expiryString) => {
     if (numMatch) {
       initialHours = parseFloat(numMatch[1]);
     }
-    
+
     if (/day|d\b/i.test(expiryString)) {
       initialHours *= 24;
     } else if (/min|m\b/i.test(expiryString)) {
@@ -67,14 +67,14 @@ const getDynamicExpiry = (createdTimeIso, expiryString) => {
 
 function Dashboard() {
   const { t } = useLanguage();
-  
+
   // Real-time ticking state to trigger countdown updates without reload
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => setTick((curr) => curr + 1), 10000); // 10-second tick
     return () => clearInterval(timer);
   }, []);
-  
+
   // Parse current logged-in user details from token
   const token = localStorage.getItem("token");
   let currentUserEmail = "";
@@ -89,22 +89,25 @@ function Dashboard() {
     console.error("JWT parse error:", e);
   }
 
-  const [donations,      setDonations]      = useState([]);
-  const [ngoMap,         setNgoMap]         = useState({});
-  const [ngoLoading,     setNgoLoading]     = useState({});
+  const [donations, setDonations] = useState([]);
+  const [ngoMap, setNgoMap] = useState({});
+  const [ngoLoading, setNgoLoading] = useState({});
   const [volunteerShifts, setVolunteerShifts] = useState([]);
-  const [shiftLoading,   setShiftLoading]   = useState(false);
-  const [submitting,     setSubmitting]     = useState(false);
-  const [search,         setSearch]         = useState("");
-  const [activeTab,      setActiveTab]      = useState("all"); // "all", "available", "bookings", "donations"
+  const [shiftLoading, setShiftLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("all"); // "all", "available", "bookings", "donations"
 
   const [formData, setFormData] = useState({
-    food_name:   "",
-    quantity:    "",
+    food_name: "",
+    quantity: "",
     expiry_time: "",
-    location:    "",
-    donor_id:    currentUserEmail,
+    location: "",
+    donor_id: currentUserEmail,
   });
+
+  const [postcardData, setPostcardData] = useState(null);
+  const [loadingPostcard, setLoadingPostcard] = useState(false);
 
   // Custom modal notification and confirmation state
   const [modalConfig, setModalConfig] = useState({
@@ -229,7 +232,7 @@ function Dashboard() {
         newDonationForm.append("expiry_time", expiry_time || "3 hours");
         newDonationForm.append("location", location || "Central Square");
         newDonationForm.append("donor_id", currentUserEmail);
-        
+
         try {
           await API.post("/donate", newDonationForm);
           await customAlert(`AI successfully created a donation for: ${food_name || 'Pasta'}!`, "AI Agent Action Completed");
@@ -248,7 +251,7 @@ function Dashboard() {
         return;
       }
 
-      const match = donations.find(d => 
+      const match = donations.find(d =>
         (d.food_name || "").toLowerCase().includes(targetName)
       );
 
@@ -388,6 +391,20 @@ function Dashboard() {
     window.location.href = "/login";
   };
 
+  // ── View AI Postcard ──────────────────────────────────────────────────────
+  const handleViewPostcard = async (id) => {
+    setLoadingPostcard(true);
+    try {
+      const { data } = await API.get(`/donation/${id}/postcard`);
+      setPostcardData(data);
+    } catch (err) {
+      console.error("[Dashboard] postcard error:", err);
+      await customAlert("Could not generate postcard.", "Error");
+    } finally {
+      setLoadingPostcard(false);
+    }
+  };
+
   // ── Filtered list ─────────────────────────────────────────────────────────
   const filtered = donations.filter((d) => {
     // 1. Tab filters
@@ -410,9 +427,9 @@ function Dashboard() {
 
   // ── Priority badge styles ─────────────────────────────────────────────────
   const priorityStyle = {
-    HIGH:   { background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" },
+    HIGH: { background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" },
     MEDIUM: { background: "#fffbeb", color: "#d97706", border: "1px solid #fde68a" },
-    LOW:    { background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" },
+    LOW: { background: "#f0fdf4", color: "#16a34a", border: "1px solid #bbf7d0" },
   };
 
   return (
@@ -563,9 +580,9 @@ function Dashboard() {
       <div style={S.statsStrip}>
         {[
           { icon: "📦", value: donations.length, label: "Total" },
-          { icon: "🔴", value: donations.filter(d => d.priority === "HIGH").length,   label: "High" },
+          { icon: "🔴", value: donations.filter(d => d.priority === "HIGH").length, label: "High" },
           { icon: "🟡", value: donations.filter(d => d.priority === "MEDIUM").length, label: "Medium" },
-          { icon: "🟢", value: donations.filter(d => d.priority === "LOW").length,    label: "Low" },
+          { icon: "🟢", value: donations.filter(d => d.priority === "LOW").length, label: "Low" },
         ].map((s) => (
           <div key={s.label} style={S.statCard}>
             <span style={S.statIcon}>{s.icon}</span>
@@ -667,9 +684,9 @@ function Dashboard() {
                     style={S.cardImg}
                   />
                   <span style={{ ...S.priorityTag, ...ps }}>
-                    {donation.priority === "HIGH"   && "🔴 "}
+                    {donation.priority === "HIGH" && "🔴 "}
                     {donation.priority === "MEDIUM" && "🟡 "}
-                    {donation.priority === "LOW"    && "🟢 "}
+                    {donation.priority === "LOW" && "🟢 "}
                     {donation.priority}
                   </span>
                 </div>
@@ -693,21 +710,61 @@ function Dashboard() {
                       {expiryInfo.isExpired
                         ? "⚠️ Expired"
                         : donation.status === "Booked"
-                        ? `🤝 ${t('status_booked')}`
-                        : donation.status === "Collected"
-                        ? `✅ ${t('status_collected')}`
-                        : `🟢 ${t('status_available')}`}
+                          ? `🤝 ${t('status_booked')}`
+                          : donation.status === "Collected"
+                            ? `✅ ${t('status_collected')}`
+                            : `🟢 ${t('status_available')}`}
                     </span>
                   </div>
 
                   <div style={S.infoRows}>
-                    <InfoRow icon="⚖️" label={t('col_qty')}      value={donation.quantity} />
-                    <InfoRow icon="⏰" label={t('col_expiry')}  value={expiryInfo.label} />
+                    <InfoRow icon="⚖️" label={t('col_qty')} value={donation.quantity} />
+                    <InfoRow icon="⏰" label={t('col_expiry')} value={expiryInfo.label} />
                     <InfoRow icon="📍" label={t('col_location')} value={donation.location} />
                     <InfoRow icon="🔥" label="Spoilage" value={donation.spoilage?.spoilage_label || donation.spoilage_label || "Unknown"} />
                     <InfoRow icon="🍽️" label="Meal Match" value={donation.meal_suggestions?.[0]?.recipe_name ? `${donation.meal_suggestions[0].recipe_name} (${donation.meal_suggestions[0].servings} servings)` : "N/A"} />
                     {donation.pickup_route && <InfoRow icon="🚚" label="Pickup route" value={donation.pickup_route} />}
-                    <InfoRow icon="🔄" label={t('col_status')}   value={expiryInfo.isExpired ? "Expired" : (donation.status || "Pending")} />
+                    <InfoRow icon="🔄" label={t('col_status')} value={expiryInfo.isExpired ? "Expired" : (donation.status || "Pending")} />
+
+                    {/* Feature 1: Eco-Impact Info */}
+                    {donation.eco_impact && (
+                      <div style={{
+                        marginTop: "10px",
+                        padding: "8px 12px",
+                        backgroundColor: "#ecfdf5",
+                        borderRadius: "12px",
+                        border: "1px solid #a7f3d0",
+                        fontSize: "12px",
+                        color: "#065f46"
+                      }}>
+                        <div style={{ fontWeight: "700", marginBottom: "2px", display: "flex", alignItems: "center", gap: "4px" }}>
+                          🌍 Eco Impact
+                        </div>
+                        <p style={{ margin: 0, opacity: 0.9 }}>
+                          Saved <b>{donation.eco_impact.co2_saved_kg}kg</b> CO2 & <b>{donation.eco_impact.water_saved_liters}L</b> water.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Feature 3: Meal Kit Alerts */}
+                    {donation.meal_kits && donation.meal_kits.length > 0 && (
+                      <div style={{
+                        marginTop: "8px",
+                        padding: "8px 12px",
+                        backgroundColor: "#fffbeb",
+                        borderRadius: "12px",
+                        border: "1px solid #fde68a",
+                        fontSize: "12px",
+                        color: "#92400e"
+                      }}>
+                        <div style={{ fontWeight: "700", display: "flex", alignItems: "center", gap: "4px" }}>
+                          🍱 Meal Kit Found
+                        </div>
+                        <p style={{ margin: "2px 0 0" }}>
+                          Pair with <b>{donation.meal_kits[0].complementary_item}</b> nearby!
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Countdown Progress Bar */}
@@ -832,6 +889,24 @@ function Dashboard() {
                         fontWeight: "500",
                       }}>
                         🎉 Collected and saved!
+                        {/* Feature 2: Postcard Button */}
+                        <button
+                          onClick={() => handleViewPostcard(donation.id)}
+                          style={{
+                            marginTop: "8px",
+                            padding: "6px 12px",
+                            backgroundColor: "#059669",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "6px",
+                            fontSize: "11px",
+                            fontWeight: "700",
+                            cursor: "pointer",
+                            width: "100%"
+                          }}
+                        >
+                          💌 View Impact Postcard
+                        </button>
                       </div>
                     )}
 
@@ -1035,10 +1110,10 @@ const S = {
     marginBottom: "32px",
     boxShadow: "0 1px 3px 0 rgba(0, 0, 0, 0.05)",
   },
-  navBrand:  { display: "flex", alignItems: "center", gap: "10px" },
-  navLogo:   { fontSize: "26px" },
-  navTitle:  { fontSize: "22px", fontWeight: "800", color: "#0f172a", margin: 0 },
-  navBadge:  {
+  navBrand: { display: "flex", alignItems: "center", gap: "10px" },
+  navLogo: { fontSize: "26px" },
+  navTitle: { fontSize: "22px", fontWeight: "800", color: "#0f172a", margin: 0 },
+  navBadge: {
     fontSize: "11px", color: "#059669",
     background: "#ecfdf5",
     padding: "2px 10px", borderRadius: "999px",
@@ -1069,9 +1144,11 @@ const S = {
     gap: "14px", marginBottom: "16px",
   },
   fieldGroup: { display: "flex", flexDirection: "column", gap: "5px" },
-  label: { color: "#334155", fontSize: "12px", fontWeight: "700",
-           textTransform: "uppercase", letterSpacing: "0.05em",
-           display: "flex", alignItems: "center", gap: "6px" },
+  label: {
+    color: "#334155", fontSize: "12px", fontWeight: "700",
+    textTransform: "uppercase", letterSpacing: "0.05em",
+    display: "flex", alignItems: "center", gap: "6px"
+  },
   autoFillTag: {
     fontSize: "10px", background: "#ecfdf5",
     color: "#059669", padding: "1px 8px", borderRadius: "999px",
@@ -1122,10 +1199,12 @@ const S = {
     padding: "14px 28px", minWidth: "120px",
     boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
   },
-  statIcon:  { fontSize: "20px", marginBottom: "4px" },
+  statIcon: { fontSize: "20px", marginBottom: "4px" },
   statValue: { fontSize: "24px", fontWeight: "800", color: "#0f172a" },
-  statLabel: { fontSize: "10px", color: "#475569", fontWeight: "700",
-               textTransform: "uppercase", letterSpacing: "0.06em" },
+  statLabel: {
+    fontSize: "10px", color: "#475569", fontWeight: "700",
+    textTransform: "uppercase", letterSpacing: "0.06em"
+  },
 
   // Grid
   grid: {
@@ -1207,9 +1286,9 @@ const S = {
     padding: "3px 11px", borderRadius: "999px",
     backdropFilter: "blur(6px)",
   },
-  cardBody:  { padding: "16px 18px 18px" },
+  cardBody: { padding: "16px 18px 18px" },
   cardTitle: { fontSize: "17px", fontWeight: "800", color: "#0f172a", margin: "0 0 10px" },
-  infoRows:  { marginBottom: "4px" },
+  infoRows: { marginBottom: "4px" },
   delBtn: {
     marginTop: "12px", width: "100%",
     background: "linear-gradient(135deg,#ef4444,#dc2626)",

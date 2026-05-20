@@ -157,6 +157,26 @@ function Analytics() {
               titleColor: "text-blue-800",
               valueColor: "text-blue-900",
               subtitle: "Unique distribution locations"
+            },
+            {
+              title: "CO2 Offset",
+              value: summary?.total_co2_saved_kg || 0,
+              icon: "🌱",
+              color: "from-green-50 to-emerald-50",
+              border: "border-green-200",
+              titleColor: "text-green-800",
+              valueColor: "text-green-900",
+              subtitle: "kg of CO2 emissions saved"
+            },
+            {
+              title: "Water Saved",
+              value: (summary?.total_water_saved_liters || 0).toLocaleString(),
+              icon: "💧",
+              color: "from-cyan-50 to-blue-50",
+              border: "border-cyan-200",
+              titleColor: "text-cyan-800",
+              valueColor: "text-cyan-900",
+              subtitle: "Liters of clean water saved"
             }
           ].map((stat, i) => (
             <div

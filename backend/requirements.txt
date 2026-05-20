@@ -4,6 +4,7 @@
 # ── Web framework ─────────────────────────────────────────────────────────────
 fastapi==0.136.1
 uvicorn==0.47.0
+gunicorn==21.2.0
 starlette==1.0.0
 python-multipart==0.0.29   # required for File/Form uploads in FastAPI
 
@@ -21,7 +22,7 @@ bcrypt==5.0.0
 PyJWT==2.12.1
 
 # ── AI / ML (food classifier) ────────────────────────────────────────────────
-tensorflow==2.21.0          # includes Keras 3 as default backend
+tensorflow-cpu              # switching to CPU-only for smaller footprint and better cloud compatibility
 numpy>=1.26.0,<3.0          # compatible with TF 2.21
 pillow>=10.0.0              # image I/O (JPEG, PNG, WEBP, BMP)
 
