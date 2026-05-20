@@ -195,11 +195,12 @@ ORGS = [
     "https://shareplate-frontend-rq1v.onrender.com",
 ]
 
-# Use Regex to allow ALL Render subdomains and local development
+# Enable Global CORS (Nuclear Option)
+# This explicitly allows ALL origins, fixes cross-domain issues for good.
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https://.*\.onrender\.com|http://localhost:.*",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -272,7 +273,7 @@ def home():
         
     return {
         "message": "SharePlate Backend Running",
-        "version": "2.0.5",
+        "version": "2.0.6",
         "db_status": db_status
     }
 
