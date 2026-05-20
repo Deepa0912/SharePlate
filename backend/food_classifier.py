@@ -39,20 +39,8 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
     try:
         # Try different model identifiers to fix the 404 "not found" error
         model_names = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro-vision"]
-        model = None
+        response = None
         last_error = None
-        
-        for name in model_names:
-            try:
-                model = genai.GenerativeModel(name)
-                # Attempt a dummy call or just hope this one works
-                break
-            except Exception as e:
-                last_error = e
-                continue
-        
-        if not model:
-            raise last_error or ValueError("No valid Gemini models found")
 
         prompt = """
         You are an expert food nutritionist and chef. 
@@ -64,12 +52,24 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
         
         Return ONLY valid JSON. No conversational text.
         """
+
+        for name in model_names:
+            try:
+                model = genai.GenerativeModel(name)
+                response = model.generate_content([
+                    {"mime_type": "image/jpeg", "data": image_bytes},
+                    prompt
+                ])
+                # If we got here without exception, success!
+                break
+            except Exception as e:
+                last_error = e
+                logger.warning(f"[food_classifier] model {name} failed: {e}")
+                continue
         
-        response = model.generate_content([
-            {"mime_type": "image/jpeg", "data": image_bytes},
-            prompt
-        ])
-        
+        if not response:
+            raise last_error or ValueError("All Gemini models failed")
+
         text = response.text.strip()
         
         # Clean potential markdown formatting

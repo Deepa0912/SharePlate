@@ -271,7 +271,7 @@ def home():
         
     return {
         "message": "SharePlate Backend Running",
-        "version": "2.0.4",
+        "version": "2.0.5",
         "db_status": db_status
     }
 
