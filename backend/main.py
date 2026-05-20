@@ -282,26 +282,30 @@ def home():
 @app.post("/signup")
 def signup(user: User):
     """Register a new user. Returns error if email already exists."""
+    try:
+        existing_user = users_collection.find_one({"email": user.email})
 
-    existing_user = users_collection.find_one({"email": user.email})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User already exists")
 
-    if existing_user:
-        raise HTTPException(status_code=400, detail="User already exists")
+        # Hash password
+        hashed_password = bcrypt.hashpw(
+            user.password.encode("utf-8"),
+            bcrypt.gensalt()
+        )
 
-    # Hash password with bcrypt before storing
-    hashed_password = bcrypt.hashpw(
-        user.password.encode("utf-8"),
-        bcrypt.gensalt(),
-    )
+        users_collection.insert_one({
+            "name":     user.name,
+            "email":    user.email,
+            "password": hashed_password,
+            "role":     user.role,
+        })
 
-    users_collection.insert_one({
-        "name":     user.name,
-        "email":    user.email,
-        "password": hashed_password,
-        "role":     user.role,
-    })
-
-    return {"message": "User created successfully"}
+        return {"message": "User created successfully"}
+    except Exception as e:
+        # LOG THE ERROR and return it for debugging
+        print(f"SIGNUP ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Signup database error: {str(e)}")
 
 
 # ===========================================================================
