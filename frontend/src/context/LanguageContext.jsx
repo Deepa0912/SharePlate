@@ -47,6 +47,14 @@ const translations = {
     cta_desc: "Your contribution, whether as a donor or volunteer, helps feed India's future.",
     btn_start: "Get Started",
 
+    // Analytics Center
+    analytics_hero_title: "Eradicating Hunger, One Plate at a Time.",
+    analytics_hero_subtitle: "Through the generosity of our donors and the speed of our AI, we turn surplus from weddings and hotels into hope for thousands across India.",
+    stat_meals: "Meals Provided",
+    stat_water: "Liters Saved",
+    stat_co2: "CO2 Offset",
+    stat_donations: "Donations",
+
     // Login Page
     login_title: "Login",
     ph_email: "Email",
@@ -148,8 +156,16 @@ const translations = {
     feat_title: "ಭಾರತಕ್ಕಾಗಿ ಸ್ಮಾರ್ಟ್ ವೈಶಿಷ್ಟ್ಯಗಳು",
     feat_subtitle: "ಹಸಿವನ್ನು ಒಟ್ಟಾಗಿ ಕೊನೆಗಾಣಿಸಲು ತಂತ್ರಜ್ಞಾನವನ್ನು ನಿರ್ಮಿಸುವುದು.",
     cta_title: "ಮಿಷನ್ ಸೇರಲು ಸಿದ್ಧರಿದ್ದೀರಾ?",
-    cta_desc: "ನಿಮ್ಮ ಕೊಡುಗೆ ಮದುವೆ ಫೋಟೋದಂತೆಯೇ ಸುಲಭ, ಆದರೆ ಅದರ ಪ್ರಭಾವ ಬಹಳ ದೊಡ್ಡದು.",
+    cta_desc: "ನಿಮ್ಮ ಕೊಡುಗೆಯು ಭಾರತದ ಭವಿಷ್ಯವನ್ನು ಪೋಷಿಸಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ.",
     btn_start: "ಪ್ರಾರಂಭಿಸಿ",
+
+    // Analytics Center
+    analytics_hero_title: "ಹಸಿವು ಮುಕ್ತ ಭಾರತ, ಪ್ರತಿ ತಟ್ಟೆಯ ಮೂಲಕ.",
+    analytics_hero_subtitle: "ನಮ್ಮ ದಾನಿಗಳ ಔದಾರ್ಯ ಮತ್ತು AI ತಂತ್ರಜ್ಞಾನದ ವೇಗದ ಮೂಲಕ, ನಾವು ಹೋಟೆಲ್‌ಗಳು ಮತ್ತು ಮದುವೆಗಳ ಹೆಚ್ಚುವರಿ ಆಹಾರವನ್ನು ಸಾವಿರಾರು ಜನರಿಗೆ ಹಂಚುತ್ತಿದ್ದೇವೆ.",
+    stat_meals: "ಉಣಬಡಿಸಿದ ಊಟ",
+    stat_water: "ಉಳಿಸಿದ ನೀರು (ಲೀಟರಲ್ಲಿ)",
+    stat_co2: "ಕಡಿಮೆ ಮಾಡಿದ ಇಂಗಾಲ",
+    stat_donations: "ಒಟ್ಟು ಕೊಡುಗೆಗಳು",
 
     // Login Page
     login_title: "ಲಾಗಿನ್",
@@ -252,8 +268,16 @@ const translations = {
     feat_title: "स्मार्ट फीचर्स",
     feat_subtitle: "सामाजिक भलाई के लिए उन्नत तकनीक।",
     cta_title: "क्या आप प्रभाव डालने के लिए तैयार हैं?",
-    cta_desc: "हर दान मायने रखता है। आज ही भूख के खिलाफ लड़ाई में शामिल हों.",
+    cta_desc: "आपका योगदान भारत के भविष्य को खिलाने में मदद करता है।",
     btn_start: "शुरू करें",
+
+    // Analytics Center
+    analytics_hero_title: "भूख मिटाना, एक प्लेट के साथ।",
+    analytics_hero_subtitle: "हमारे दाताओं की उदारता और AI की गति के माध्यम से, हम होटलों और शादियों के अतिरिक्त भोजन को हजारों लोगों के लिए आशा में बदल देते हैं।",
+    stat_meals: "प्रदान किया गया भोजन",
+    stat_water: "बचाया गया पानी (लीटर)",
+    stat_co2: "CO2 उत्सर्जन में कमी",
+    stat_donations: "कुल दान",
 
     // Login Page
     login_title: "लॉगिन",
@@ -356,8 +380,16 @@ const translations = {
     feat_title: "இந்தியாவிற்கான ஸ்மார்ட் அம்சங்கள்",
     feat_subtitle: "பசியை கூட்டாக முடிவுக்குக் கொண்டுவருவதற்கான தொழில்நுட்பத்தை உருவாக்குதல்.",
     cta_title: "மிஷனில் இணையத் தயாரா?",
-    cta_desc: "உங்கள் பங்களிப்பு இந்தியாவின் எதிர்காலத்திற்கு உணவளிக்க உதவுகிறது. இன்று பசிக்கு எதிரான போராட்டத்தில் சேருங்கள்.",
+    cta_desc: "உங்கள் பங்களிப்பு இந்தியாவின் எதிர்காலத்திற்கு உணவளிக்க உதவுகிறது.",
     btn_start: "தொடங்குங்கள்",
+
+    // Analytics Center
+    analytics_hero_title: "பசியை ஒழித்தல், ஒரு தட்டு மூலம்.",
+    analytics_hero_subtitle: "நமது நன்கொடையாளர்களின் தாராள மனப்பான்மை மற்றும் AI இன் வேகம் மூலம், ஹோட்டல்கள் மற்றும் திருமணங்களில் இருந்து உபரி உணவை ஆயிரக்கணக்கானவர்களுக்கு நம்பிக்கையாக மாற்றுகிறோம்.",
+    stat_meals: "வழங்கப்பட்ட உணவுகள்",
+    stat_water: "சேமிக்கப்பட்ட நீர் (லிட்டர்)",
+    stat_co2: "CO2 குறைப்பு",
+    stat_donations: "மொத்த நன்கொடைகள்",
 
     // Login Page
     login_title: "உள்நுழை",
@@ -460,8 +492,16 @@ const translations = {
     feat_title: "స్మార్ట్ ఫీచర్లు",
     feat_subtitle: "సామాజిక మేలు కోసం అధునాతన సాంకేతికత.",
     cta_title: "మార్పు తీసుకురావడానికి సిద్ధంగా ఉన్నారా?",
-    cta_desc: "ప్రతి దానం ముఖ్యం. ఆకలిపై పోరాటంలో ఈరోజే వందలాది మందితో చేరండి.",
-    btn_start: "మొదలుపెట్టండి",
+    cta_desc: "మీ సహకారం భారతదేశ భవిష్యత్తుకు ఆహారం అందించడంలో సహాయపడుతుంది.",
+    btn_start: "ప్రారంభించండి",
+
+    // Analytics Center
+    analytics_hero_title: "ఆకలి నిర్మూలన, ఒక్క ప్లేట్ తో మొదలు.",
+    analytics_hero_subtitle: "మా దాతల ఉదారత మరియు AI వేగం ద్వారా, మేము హోటళ్లు మరియు వివాహాల నుండి మిగిలిపోయిన ఆహారాన్ని వేలాది మందికి ఆశగా మారుస్తాము.",
+    stat_meals: "అందించిన భోజనం",
+    stat_water: "పొదుపు చేసిన నీరు (లీటర్లు)",
+    stat_co2: "తగ్గించిన CO2",
+    stat_donations: "మొత్తం విరాళాలు",
 
     // Login Page
     login_title: "లాగిన్",

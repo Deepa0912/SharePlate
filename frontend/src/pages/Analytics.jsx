@@ -88,131 +88,169 @@ function Analytics() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Impact Hero */}
         <section className="mb-20">
-          <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[2.5rem] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl shadow-emerald-200/50">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-400/20 rounded-full translate-y-1/3 -translate-x-1/4 blur-3xl"></div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 rounded-[3.5rem] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl shadow-emerald-200/50"
+          >
+            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-[120px] animate-pulse"></div>
+            <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-400/20 rounded-full translate-y-1/3 -translate-x-1/4 blur-[100px]"></div>
 
-            <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-              <div className="flex-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-md rounded-full text-xs font-black tracking-widest uppercase mb-6 border border-white/20">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  Live Mission Impact
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center gap-16">
+              <div className="flex-1 text-center lg:text-left">
+                <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/20 backdrop-blur-xl rounded-full text-[10px] font-black tracking-widest uppercase mb-8 border border-white/20 shadow-xl">
+                  <div className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></div>
+                  {t('analytics_hero_title').split(',')[0]}
                 </div>
-                <h1 className="text-4xl md:text-6xl font-black tracking-tight mb-6 leading-tight">
-                  Eradicating Hunger, <br /><span className="text-emerald-200">One Plate at a Time.</span>
+                <h1 className="text-5xl md:text-7xl font-black tracking-tighter mb-8 leading-[0.95]">
+                  {t('analytics_hero_title').split(',')[0]} <br /><span className="text-emerald-300">{t('analytics_hero_title').split(',')[1]}</span>
                 </h1>
-                <p className="text-emerald-50/80 text-lg md:text-xl font-medium leading-relaxed max-w-2xl">
-                  Through the generosity of our donors and the speed of our AI, we turn surplus from weddings and hotels into hope for thousands across India.
+                <p className="text-emerald-50/70 text-lg md:text-xl font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
+                  {t('analytics_hero_subtitle')}
                 </p>
               </div>
-              <div className="w-full md:w-auto grid grid-cols-2 gap-4">
-                <ImpactQuickStat icon={<Heart className="text-rose-400" />} value={summary?.meals_saved || 0} label="Meals Provided" />
-                <ImpactQuickStat icon={<Droplets className="text-blue-400" />} value={summary?.total_water_saved_liters || 0} label="Liters Saved" />
-                <ImpactQuickStat icon={<Leaf className="text-emerald-400" />} value={summary?.total_co2_saved_kg || 0} label="CO2 Offset" />
-                <ImpactQuickStat icon={<Package className="text-amber-400" />} value={summary?.total_donations || 0} label="Donations" />
+              <div className="w-full lg:w-auto grid grid-cols-2 gap-6">
+                <ImpactQuickStat icon={<Heart className="text-rose-400" />} value={summary?.meals_saved || 0} label={t('stat_meals')} />
+                <ImpactQuickStat icon={<Droplets className="text-blue-400" />} value={summary?.total_water_saved_liters || 0} label={t('stat_water')} />
+                <ImpactQuickStat icon={<Leaf className="text-emerald-400" />} value={summary?.total_co2_saved_kg || 0} label={t('stat_co2')} />
+                <ImpactQuickStat icon={<Package className="text-amber-400" />} value={summary?.total_donations || 0} label={t('stat_donations')} />
               </div>
             </div>
-          </div>
+          </motion.div>
         </section>
 
         {/* Global Trends */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-20">
-          <div className="lg:col-span-8 bg-white border border-slate-100 rounded-[2rem] p-8 md:p-10 shadow-sm hover:shadow-xl transition-all duration-500 group">
-            <div className="flex justify-between items-start mb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 mb-20">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:col-span-8 bg-white border border-slate-100 rounded-[3rem] p-10 md:p-12 shadow-sm hover:shadow-2xl transition-all duration-700 group"
+          >
+            <div className="flex justify-between items-start mb-12">
               <div>
-                <h3 className="text-2xl font-black text-slate-800 tracking-tight flex items-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-emerald-500" />
+                <h3 className="text-3xl font-black text-slate-900 tracking-tighter flex items-center gap-4">
+                  <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
+                    <TrendingUp className="w-6 h-6" />
+                  </div>
                   Mission Momentum
                 </h3>
-                <p className="text-slate-500 font-medium text-sm mt-1">Donation volume and recovery trends over time.</p>
+                <p className="text-slate-500 font-medium text-sm mt-3">Collective impact trajectory scaling for 2030.</p>
               </div>
-              <div className="px-4 py-2 bg-slate-50 rounded-xl text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Monthly View
+              <div className="px-5 py-2.5 bg-slate-50 border border-slate-100 rounded-2xl text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                Live Feed Sync
               </div>
             </div>
-            <div className="h-[400px] w-full">
+            <div className="h-[450px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={monthly_trends} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="impactGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="month" stroke="#94a3b8" tick={{ fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} dy={10} />
-                  <YAxis stroke="#94a3b8" tick={{ fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="1 1" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="month" stroke="#cbd5e1" tick={{ fontSize: 11, fontWeight: 800 }} axisLine={false} tickLine={false} dy={15} />
+                  <YAxis stroke="#cbd5e1" tick={{ fontSize: 11, fontWeight: 800 }} axisLine={false} tickLine={false} />
                   <Tooltip
-                    contentStyle={{ background: "#ffffff", border: "none", borderRadius: "20px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "12px 20px" }}
-                    itemStyle={{ fontWeight: 800, fontSize: "14px", color: "#065f46" }}
-                    labelStyle={{ fontWeight: 600, color: "#64748b", marginBottom: "4px" }}
+                    cursor={{ stroke: '#10b981', strokeWidth: 2, strokeDasharray: '5 5' }}
+                    contentStyle={{ background: "#ffffff", border: "1px solid #f1f5f9", borderRadius: "24px", boxShadow: "0 20px 50px rgba(0,0,0,0.1)", padding: "16px 24px" }}
+                    itemStyle={{ fontWeight: 900, fontSize: "16px", color: "#065f46" }}
+                    labelStyle={{ fontWeight: 700, color: "#94a3b8", marginBottom: "6px", textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '10px' }}
                   />
-                  <Area type="monotone" dataKey="donations" stroke="#10b981" strokeWidth={5} fill="url(#impactGradient)" animationDuration={2000} />
+                  <Area type="monotone" dataKey="donations" stroke="#10b981" strokeWidth={6} fill="url(#impactGradient)" animationDuration={3000} strokeLinecap="round" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
 
-          <div className="lg:col-span-4 bg-white border border-slate-100 rounded-[2rem] p-8 md:p-10 shadow-sm hover:shadow-xl transition-all duration-500 flex flex-col">
-            <h3 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Resource Rescue</h3>
-            <p className="text-slate-500 font-medium text-sm mb-10">Top recovered food categories across our network.</p>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-[3rem] p-10 md:p-12 shadow-2xl flex flex-col relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+            <h3 className="text-3xl font-black text-white tracking-tighter mb-4">Rescue Mix</h3>
+            <p className="text-slate-500 font-medium text-sm mb-12">Diversity of nutrients recovered across sectors.</p>
 
             <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="h-64 w-full">
+              <div className="h-72 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={top_foods} innerRadius={80} outerRadius={100} paddingAngle={8} dataKey="value" stroke="none">
+                    <Pie data={top_foods} innerRadius={90} outerRadius={115} paddingAngle={10} dataKey="value" stroke="none">
                       {top_foods?.map((_, index) => (
                         <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ borderRadius: '16px', border: 'none', shadow: 'none' }} />
+                    <Tooltip contentStyle={{ borderRadius: '20px', border: 'none', background: '#ffffff', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="w-full space-y-4 py-8">
+              <div className="w-full space-y-5 py-10">
                 {top_foods?.map((food, i) => (
                   <div key={i} className="flex items-center justify-between group/item">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}></div>
-                      <span className="text-sm font-bold text-slate-700 group-hover/item:text-slate-900 transition-colors uppercase tracking-tight">{food.name}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="w-3.5 h-3.5 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.1)]" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }}></div>
+                      <span className="text-xs font-black text-slate-400 group-hover/item:text-white transition-colors uppercase tracking-widest">{food.name}</span>
                     </div>
-                    <span className="text-sm font-black text-slate-900">{food.value} units</span>
+                    <span className="text-sm font-black text-white">{food.value} units</span>
                   </div>
                 ))}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        {/* Reach Section */}
-        <section className="bg-slate-900 rounded-[2.5rem] p-10 md:p-16 text-white relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-1/2 h-full bg-emerald-500/10 blur-[120px]"></div>
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+        {/* Geographic Hubs */}
+        <section className="bg-white border border-slate-100 rounded-[4rem] p-12 md:p-20 shadow-sm relative overflow-hidden">
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-50 rounded-full blur-[100px]"></div>
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
-              <h2 className="text-3xl md:text-5xl font-black tracking-tight mb-6">Our Geographic Footprint</h2>
-              <p className="text-slate-400 text-lg leading-relaxed mb-10 font-medium">
+              <div className="inline-flex items-center gap-3 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest mb-8">
+                <MapPin className="w-4 h-4" /> Global Hub Network
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-slate-900 mb-8 leading-none">
+                Our Geographic <br /><span className="text-emerald-600">Command.</span>
+              </h2>
+              <p className="text-slate-500 text-lg leading-relaxed mb-12 font-medium">
                 We are actively expanding across major Indian hubs to ensure no kitchen surplus goes to waste. Our AI identifies the nearest verified partner for rapid pickup.
               </p>
               <div className="grid grid-cols-2 gap-6">
                 {top_locations?.slice(0, 4).map((loc, i) => (
-                  <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
-                    <MapPin className="text-emerald-400 w-5 h-5 flex-shrink-0" />
-                    <div>
-                      <div className="text-xs font-black text-slate-500 uppercase tracking-widest">{loc.donations} Missions</div>
-                      <div className="text-sm font-bold truncate max-w-[120px]">{loc.location.split(',')[0]}</div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    key={i}
+                    className="bg-slate-50 border border-slate-100 rounded-[2rem] p-6 flex items-center gap-5 transition-all hover:bg-white hover:shadow-xl group"
+                  >
+                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-all">
+                      <MapPin className="w-6 h-6" />
                     </div>
-                  </div>
+                    <div>
+                      <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{loc.donations} Units</div>
+                      <div className="text-sm font-black text-slate-800 truncate max-w-[120px]">{loc.location.split(',')[0]}</div>
+                    </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 h-[400px]">
+            <div className="bg-slate-900 rounded-[3rem] p-12 h-[500px] shadow-2xl relative">
+              <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:30px_30px] opacity-[0.03]"></div>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={top_locations} layout="vertical" margin={{ left: 50, right: 30 }}>
+                <BarChart data={top_locations} layout="vertical" margin={{ left: 60, right: 30, top: 20, bottom: 20 }}>
                   <XAxis type="number" hide />
-                  <YAxis dataKey="location" type="category" stroke="#94a3b8" tick={{ fontSize: 11, fontWeight: 700 }} width={80} axisLine={false} tickLine={false} tickFormatter={(v) => v.split(',')[0]} />
-                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} contentStyle={{ background: '#1e293b', border: 'none', borderRadius: '12px' }} />
-                  <Bar dataKey="donations" fill="#10b981" radius={[0, 10, 10, 0]} barSize={20} />
+                  <YAxis dataKey="location" type="category" stroke="#475569" tick={{ fontSize: 10, fontWeight: 900 }} width={80} axisLine={false} tickLine={false} tickFormatter={(v) => v.split(',')[0].toUpperCase()} />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                    contentStyle={{ background: '#0f172a', border: '1px solid #1e293b', borderRadius: '16px', color: '#ffffff' }}
+                    itemStyle={{ fontWeight: 900, fontSize: '14px', color: '#10b981' }}
+                  />
+                  <Bar dataKey="donations" fill="#10b981" radius={[0, 8, 8, 0]} barSize={24} animationDuration={2000}>
+                    {top_locations?.map((_, index) => (
+                      <Cell key={index} fill={index === 0 ? '#10b981' : '#334155'} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -220,12 +258,23 @@ function Analytics() {
         </section>
       </main>
 
-      {/* Footer-like CTA */}
-      <footer className="max-w-7xl mx-auto px-6 py-20 text-center">
-        <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-6">Help us expand this chart.</h3>
-        <button className="px-10 py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black transition-all shadow-xl shadow-emerald-200 hover:shadow-2xl active:scale-95 text-lg">
-          Donate Surplus Today
-        </button>
+      {/* Footer CTA */}
+      <footer className="max-w-7xl mx-auto px-6 py-32 text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          className="bg-slate-50 border border-slate-100 rounded-[4rem] p-16 md:p-24 shadow-sm"
+        >
+          <h3 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter">Ready to scale the mission?</h3>
+          <p className="text-slate-500 font-medium text-lg mb-12 max-w-xl mx-auto">Your donation today fuels the trajectory of tomorrow's hunger-free India.</p>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-14 py-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[2rem] font-black transition-all shadow-2xl shadow-emerald-500/20 text-xl"
+          >
+            Launch Survival Mission
+          </motion.button>
+        </motion.div>
       </footer>
     </div>
   );
