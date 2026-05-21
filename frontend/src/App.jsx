@@ -8,6 +8,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Leaderboard from "./pages/Leaderboard";
+import Settings from "./pages/Settings";
+import NotFound from "./pages/NotFound";
 import Chatbot from "./components/Chatbot";
 import { LanguageProvider } from "./context/LanguageContext";
 
@@ -51,6 +53,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
         <Chatbot />
       </BrowserRouter>

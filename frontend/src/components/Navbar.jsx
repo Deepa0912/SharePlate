@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "./LanguageSelector";
-import { LogOut, LayoutDashboard, BarChart3, Home as HomeIcon, Trophy, Menu, X } from "lucide-react";
+import { LogOut, LayoutDashboard, BarChart3, Home as HomeIcon, Trophy, Menu, X, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
@@ -36,7 +36,9 @@ export default function Navbar() {
                         {token && (
                             <>
                                 <NavLink to="/dashboard" active={isActive("/dashboard")} icon={<LayoutDashboard size={16} />}>{t('dashboard')}</NavLink>
+                                <NavLink to="/analytics" active={isActive("/analytics")} icon={<BarChart3 size={16} />}>Impact Center</NavLink>
                                 <NavLink to="/leaderboard" active={isActive("/leaderboard")} icon={<Trophy size={16} />}>Hall of Heroes</NavLink>
+                                <NavLink to="/settings" active={isActive("/settings")} icon={<Settings size={16} />}>Settings</NavLink>
                             </>
                         )}
                     </div>
@@ -85,7 +87,9 @@ export default function Navbar() {
                             {token ? (
                                 <>
                                     <MobileNavLink to="/dashboard" onClick={() => setIsOpen(false)} icon={<LayoutDashboard size={18} />}>{t('dashboard')}</MobileNavLink>
+                                    <MobileNavLink to="/analytics" onClick={() => setIsOpen(false)} icon={<BarChart3 size={18} />}>Impact Center</MobileNavLink>
                                     <MobileNavLink to="/leaderboard" onClick={() => setIsOpen(false)} icon={<Trophy size={18} />}>Hall of Heroes</MobileNavLink>
+                                    <MobileNavLink to="/settings" onClick={() => setIsOpen(false)} icon={<Settings size={18} />}>Settings</MobileNavLink>
                                     <hr className="border-slate-50" />
                                     <div className="flex items-center justify-between p-4">
                                         <LanguageSelector />

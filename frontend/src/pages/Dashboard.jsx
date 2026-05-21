@@ -258,6 +258,8 @@ function Dashboard() {
     console.error("JWT parse error:", e);
   }
 
+  const [currentUserName, setCurrentUserName] = useState(localStorage.getItem("userName") || "Platinum Commander");
+
   const [donations, setDonations] = useState([]);
   const [ngoMap, setNgoMap] = useState({});
   const [ngoLoading, setNgoLoading] = useState({});
@@ -432,7 +434,7 @@ function Dashboard() {
               <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl"></div>
               <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Humanitarian Tier</div>
               <div className="text-slate-900 font-black flex items-center gap-3 text-xl">
-                <Star className="w-6 h-6 fill-amber-400 text-amber-400 animate-spin-slow" /> Platinum Commander
+                <Star className="w-6 h-6 fill-amber-400 text-amber-400 animate-spin-slow" /> {currentUserName}
               </div>
             </div>
           </motion.div>
@@ -542,6 +544,9 @@ function Dashboard() {
                 </div>
               )}
             </div>
+
+            {/* Visual Analytics - Moved from sidebar for better visibility */}
+            <SustainabilityAnalytics data={chartData} />
           </section>
 
           {/* Sidebar Portal */}
@@ -590,8 +595,6 @@ function Dashboard() {
               </div>
             </motion.div>
 
-            {/* Visual Analytics */}
-            <SustainabilityAnalytics data={chartData} />
 
             {/* Strategic Access Points */}
             <div className="grid grid-cols-2 gap-4">

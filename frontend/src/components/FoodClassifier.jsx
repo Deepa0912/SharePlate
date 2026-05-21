@@ -1,49 +1,33 @@
 // src/components/FoodClassifier.jsx
 // ==================================
-// AI food image classifier component for SharePlate.
-//
-// Features:
-//   - Drag-and-drop OR click-to-upload image area
-//   - Instant image preview
-//   - Loading spinner during inference
-//   - Prediction badge with confidence colour coding
-//   - Auto-fill callback: fires when confidence >= AUTO_FILL_THRESHOLD
-//
-// Props:
-//   onFoodDetected(foodName: string, confidence: number)
-//       Called whenever a prediction is returned (even low-confidence ones).
-//       The parent decides whether to auto-fill based on confidence.
-//
-// Usage:
-//   <FoodClassifier onFoodDetected={(name, conf) => { ... }} />
+// AI food image classifier — premium Tailwind redesign.
+// Drag-and-drop OR click-to-upload with instant preview.
+// Fires onFoodDetected(foodName, confidence) when classification succeeds.
 
 import { useState, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Upload, Sparkles, RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import API from "../services/api";
 
-// Minimum confidence (0–100) to trigger auto-fill in the parent form
 const AUTO_FILL_THRESHOLD = 80;
 
 function FoodClassifier({ onFoodDetected }) {
-
-  const [preview,    setPreview]    = useState(null);   // data URL
-  const [loading,    setLoading]    = useState(false);
-  const [result,     setResult]     = useState(null);   // API response
-  const [error,      setError]      = useState(null);
-  const [dragging,   setDragging]   = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [dragging, setDragging] = useState(false);
 
   const fileInputRef = useRef(null);
 
-
-  // ── Classify image via backend ──────────────────────────────────────────
+  // ── Classify ──────────────────────────────────────────────────────────────
   const classifyImage = useCallback(async (file) => {
     if (!file) return;
 
-    // Show preview immediately
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
     reader.readAsDataURL(file);
 
-    // Reset state
     setResult(null);
     setError(null);
     setLoading(true);
@@ -51,326 +35,153 @@ function FoodClassifier({ onFoodDetected }) {
     try {
       const formData = new FormData();
       formData.append("image", file);
-
       const { data } = await API.post("/classify-food", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-
       setResult(data);
-
-      // Notify parent — parent auto-fills if confidence >= threshold
-      if (onFoodDetected) {
-        onFoodDetected(data.food_name, data.confidence);
-      }
+      if (onFoodDetected) onFoodDetected(data.food_name, data.confidence);
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-        "Classification failed. Please try again."
-      );
+      setError(err.response?.data?.detail || "Classification failed. Please try again.");
     } finally {
       setLoading(false);
     }
   }, [onFoodDetected]);
 
-
-  // ── File input handler ──────────────────────────────────────────────────
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) classifyImage(file);
-  };
-
-  // ── Drag-and-drop handlers ──────────────────────────────────────────────
-  const handleDragOver  = (e) => { e.preventDefault(); setDragging(true);  };
-  const handleDragLeave = ()  => setDragging(false);
-  const handleDrop      = (e) => {
+  const handleFileChange = (e) => { const f = e.target.files?.[0]; if (f) classifyImage(f); };
+  const handleDragOver = (e) => { e.preventDefault(); setDragging(true); };
+  const handleDragLeave = () => setDragging(false);
+  const handleDrop = (e) => {
     e.preventDefault();
     setDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) classifyImage(file);
+    const f = e.dataTransfer.files?.[0];
+    if (f) classifyImage(f);
   };
 
-
-  // ── Confidence badge colour ─────────────────────────────────────────────
-  const getBadgeStyle = (confidence) => {
-    if (confidence >= 80) return { ...styles.badge, background: "#16a34a" };
-    if (confidence >= 50) return { ...styles.badge, background: "#d97706" };
-    return { ...styles.badge, background: "#dc2626" };
-  };
-
+  const confidenceColor = (c) => c >= 80 ? "bg-emerald-500" : c >= 50 ? "bg-amber-500" : "bg-rose-500";
 
   return (
-    <div style={styles.wrapper}>
-
+    <div className="rounded-[1.5rem] bg-slate-50 border border-slate-100 p-5 mb-5">
       {/* Header */}
-      <div style={styles.header}>
-        <span style={styles.headerIcon}>🤖</span>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+          <Sparkles className="w-5 h-5" />
+        </div>
         <div>
-          <p style={styles.headerTitle}>AI Food Classifier</p>
-          <p style={styles.headerSub}>
-            Upload a photo — we'll detect the food type automatically
-          </p>
+          <p className="text-sm font-black text-slate-800">AI Food Classifier</p>
+          <p className="text-[11px] text-emerald-600 font-medium">Upload a photo — we'll detect the food type automatically</p>
         </div>
       </div>
 
       {/* Drop zone */}
       <div
-        style={{
-          ...styles.dropZone,
-          ...(dragging ? styles.dropZoneActive : {}),
-          ...(preview  ? styles.dropZoneWithPreview : {}),
-        }}
         onClick={() => !loading && fileInputRef.current?.click()}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
+        className={`relative border-2 border-dashed rounded-2xl min-h-[150px] flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-200 ${dragging
+            ? "border-emerald-500 bg-emerald-50"
+            : preview
+              ? "border-slate-200 min-h-[220px]"
+              : "border-emerald-200 bg-emerald-50/40 hover:border-emerald-400 hover:bg-emerald-50"
+          }`}
       >
         <input
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          style={{ display: "none" }}
+          className="hidden"
           onChange={handleFileChange}
         />
 
-        {/* Image preview */}
         {preview && (
-          <img src={preview} alt="Food preview" style={styles.preview} />
+          <img
+            src={preview}
+            alt="Food preview"
+            className="w-full max-h-[260px] object-cover rounded-xl"
+          />
         )}
 
-        {/* Overlay text */}
         {!preview && !loading && (
-          <div style={styles.dropPlaceholder}>
-            <span style={styles.dropIcon}>📷</span>
-            <p style={styles.dropTitle}>Drop image here or click to upload</p>
-            <p style={styles.dropSub}>JPEG · PNG · WEBP supported</p>
+          <div className="text-center p-6">
+            <Upload className="w-8 h-8 text-emerald-400 mx-auto mb-3" />
+            <p className="text-sm font-bold text-emerald-700 mb-1">Drop image here or click to upload</p>
+            <p className="text-[11px] text-slate-400 font-medium">JPEG · PNG · WEBP supported</p>
           </div>
         )}
 
-        {/* Loading spinner overlay */}
         {loading && (
-          <div style={styles.spinnerOverlay}>
-            <div style={styles.spinner} className="food-spinner" />
-            <p style={styles.spinnerText}>Analysing food…</p>
+          <div className="absolute inset-0 bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center gap-3 rounded-xl">
+            <div className="w-10 h-10 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
+            <p className="text-sm font-bold text-emerald-700">Analysing food…</p>
           </div>
         )}
       </div>
 
-      {/* Error message */}
-      {error && (
-        <div style={styles.errorBox}>
-          <span>⚠️</span> {error}
-        </div>
-      )}
-
-      {/* Prediction result */}
-      {result && !loading && (
-        <div style={styles.resultBox}>
-
-          {/* Top prediction badge */}
-          <div style={styles.predictionRow}>
-            <span style={getBadgeStyle(result.confidence)}>
-              {result.confidence}%
-            </span>
-            <div>
-              <p style={styles.foodName}>
-                {result.is_food ? "🍽️" : "🖼️"} {result.food_name}
-              </p>
-              <p style={styles.foodSub}>
-                {result.confidence >= AUTO_FILL_THRESHOLD
-                  ? "✅ Auto-filled in food name field"
-                  : "⚠️ Low confidence — please verify"}
-              </p>
-            </div>
-          </div>
-
-          {/* Top predictions list */}
-          {result.top_predictions?.length > 1 && (
-            <div style={styles.topList}>
-              <p style={styles.topListLabel}>Other matches:</p>
-              {result.top_predictions.slice(1).map((p, i) => (
-                <div key={i} style={styles.topListItem}>
-                  <span style={styles.topListName}>{p.food_name}</span>
-                  <span style={styles.topListConf}>{p.confidence}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Re-upload button */}
-          <button
-            style={styles.retryBtn}
-            onClick={() => {
-              setPreview(null);
-              setResult(null);
-              fileInputRef.current?.click();
-            }}
+      {/* Error */}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="mt-3 flex items-center gap-2.5 px-4 py-3 bg-rose-50 border border-rose-100 rounded-2xl text-rose-700 text-sm font-bold"
           >
-            📷 Try Another Image
-          </button>
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        </div>
-      )}
+      {/* Result */}
+      <AnimatePresence>
+        {result && !loading && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-3 space-y-3"
+          >
+            {/* Top prediction */}
+            <div className="flex items-center gap-3 p-3.5 bg-emerald-50 border border-emerald-100 rounded-2xl">
+              <span className={`${confidenceColor(result.confidence)} text-white text-[11px] font-black px-3 py-1 rounded-full whitespace-nowrap`}>
+                {result.confidence}%
+              </span>
+              <div>
+                <p className="text-sm font-black text-slate-800">
+                  {result.is_food ? "🍽️" : "🖼️"} {result.food_name}
+                </p>
+                <p className="text-[11px] text-emerald-600 font-bold">
+                  {result.confidence >= AUTO_FILL_THRESHOLD
+                    ? "✅ Auto-filled in food name field"
+                    : "⚠️ Low confidence — please verify"}
+                </p>
+              </div>
+            </div>
 
-      {/* Keyframe injection */}
-      <style>{`
-        @keyframes food-spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes food-fade-in {
-          from { opacity: 0; transform: translateY(8px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .food-spinner {
-          animation: food-spin 0.8s linear infinite;
-        }
-      `}</style>
+            {/* Other matches */}
+            {result.top_predictions?.length > 1 && (
+              <div className="px-4 py-3 bg-white border border-slate-100 rounded-2xl space-y-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Other matches</p>
+                {result.top_predictions.slice(1).map((p, i) => (
+                  <div key={i} className="flex justify-between items-center text-xs">
+                    <span className="font-bold text-slate-700">{p.food_name}</span>
+                    <span className="font-black text-emerald-600">{p.confidence}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Re-upload */}
+            <button
+              onClick={() => { setPreview(null); setResult(null); fileInputRef.current?.click(); }}
+              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-100 rounded-2xl text-xs font-black text-slate-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 transition-all"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Try Another Image
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
-
-
-// ── Inline styles ────────────────────────────────────────────────────────────
-const styles = {
-  wrapper: {
-    borderRadius: "20px",
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    padding: "20px",
-    marginBottom: "18px",
-  },
-
-  // Header
-  header: {
-    display: "flex", alignItems: "flex-start", gap: "12px",
-    marginBottom: "16px",
-  },
-  headerIcon:  { fontSize: "26px", lineHeight: 1 },
-  headerTitle: { color: "#0f172a", fontWeight: "700", fontSize: "15px", margin: 0 },
-  headerSub:   { color: "#059669", fontSize: "12px", margin: "2px 0 0" },
-
-  // Drop zone
-  dropZone: {
-    border: "2px dashed #a7f3d0",
-    borderRadius: "16px",
-    minHeight: "150px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    overflow: "hidden",
-    position: "relative",
-    background: "#f0fdf4",
-  },
-  dropZoneActive: {
-    border: "2px dashed #059669",
-    background: "#d1fae5",
-  },
-  dropZoneWithPreview: {
-    border: "2px solid #cbd5e1",
-    minHeight: "220px",
-  },
-
-  // Placeholder
-  dropPlaceholder: { textAlign: "center", padding: "24px" },
-  dropIcon:  { fontSize: "36px", display: "block", marginBottom: "8px" },
-  dropTitle: { color: "#059669", fontWeight: "600", fontSize: "14px", margin: "0 0 4px" },
-  dropSub:   { color: "#475569", fontSize: "12px", margin: 0 },
-
-  // Preview
-  preview: {
-    width: "100%", maxHeight: "260px",
-    objectFit: "cover", borderRadius: "14px",
-    display: "block",
-  },
-
-  // Spinner overlay
-  spinnerOverlay: {
-    position: "absolute", inset: 0,
-    background: "rgba(255,255,255,0.85)",
-    backdropFilter: "blur(4px)",
-    display: "flex", flexDirection: "column",
-    alignItems: "center", justifyContent: "center", gap: "12px",
-    borderRadius: "14px",
-  },
-  spinner: {
-    width: "40px", height: "40px",
-    border: "4px solid #e2e8f0",
-    borderTop: "4px solid #059669",
-    borderRadius: "50%",
-  },
-  spinnerText: { color: "#059669", fontSize: "14px", fontWeight: "600", margin: 0 },
-
-  // Error
-  errorBox: {
-    marginTop: "12px",
-    background: "#fef2f2",
-    border: "1px solid #fca5a5",
-    borderRadius: "12px",
-    color: "#dc2626",
-    padding: "10px 14px",
-    fontSize: "13px",
-    display: "flex", alignItems: "center", gap: "8px",
-  },
-
-  // Result
-  resultBox: {
-    marginTop: "14px",
-    animation: "food-fade-in 0.35s ease",
-  },
-  predictionRow: {
-    display: "flex", alignItems: "center", gap: "14px",
-    background: "#ecfdf5",
-    border: "1px solid #a7f3d0",
-    borderRadius: "14px",
-    padding: "12px 16px",
-    marginBottom: "10px",
-  },
-  badge: {
-    fontSize: "13px", fontWeight: "800",
-    color: "#fff", padding: "4px 12px",
-    borderRadius: "999px", whiteSpace: "nowrap",
-    minWidth: "56px", textAlign: "center",
-  },
-  foodName: {
-    color: "#0f172a", fontWeight: "700", fontSize: "16px",
-    margin: "0 0 3px",
-  },
-  foodSub: { color: "#059669", fontSize: "12px", margin: 0 },
-
-  // Top list
-  topList: {
-    background: "#f8fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    padding: "10px 14px",
-    marginBottom: "12px",
-  },
-  topListLabel: {
-    color: "#64748b", fontSize: "11px", fontWeight: "700",
-    textTransform: "uppercase", letterSpacing: "0.05em",
-    margin: "0 0 8px",
-  },
-  topListItem: {
-    display: "flex", justifyContent: "space-between",
-    paddingBottom: "5px", marginBottom: "5px",
-    borderBottom: "1px solid #e2e8f0",
-  },
-  topListName: { color: "#1e293b", fontSize: "13px" },
-  topListConf: { color: "#059669", fontSize: "13px", fontWeight: "600" },
-
-  // Retry
-  retryBtn: {
-    background: "#ecfdf5",
-    border: "1px solid #a7f3d0",
-    color: "#059669",
-    borderRadius: "10px",
-    padding: "8px 16px",
-    fontSize: "13px", fontWeight: "600",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    transition: "background 0.2s",
-  },
-};
 
 export default FoodClassifier;

@@ -8,8 +8,8 @@ import API from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "../components/LanguageSelector";
-import { User, Heart, ShieldCheck, Mail, Lock, UserPlus, ArrowRight, Check } from "lucide-react";
-import { motion } from "framer-motion";
+import { User, Heart, ShieldCheck, Mail, Lock, UserPlus, ArrowRight, Check, AlertCircle, CheckCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MISSION_BG = "/assets/mission-bg.png";
 
@@ -40,6 +40,8 @@ function Signup() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -57,13 +59,15 @@ function Signup() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
     setLoading(true);
     try {
       const response = await API.post("/signup", formData);
-      alert(response.data.message || "Onboarding successful. Please login.");
-      navigate("/login");
+      setSuccess(response.data.message || "Account created! Redirecting to login…");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error) {
-      alert(error.response?.data?.detail || "Signup failed");
+      setError(error.response?.data?.detail || "Signup failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -124,6 +128,31 @@ function Signup() {
           </div>
 
           <form onSubmit={handleSignup} className="space-y-10">
+            {/* Inline feedback */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-sm font-bold"
+                >
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </motion.div>
+              )}
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-bold"
+                >
+                  <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                  {success}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-2 group">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">

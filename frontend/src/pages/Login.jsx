@@ -8,8 +8,8 @@ import API from "../services/api";
 import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "../components/LanguageSelector";
-import { LogIn, Mail, Lock, ShieldCheck, Heart, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { LogIn, Mail, Lock, ShieldCheck, Heart, ArrowRight, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const MISSION_BG = "/assets/mission-bg.png";
 
@@ -17,6 +17,7 @@ function Login() {
   const navigate = useNavigate();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -32,13 +33,17 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
     try {
       const response = await API.post("/login", formData);
       localStorage.setItem("token", response.data.token);
+      if (response.data.name) {
+        localStorage.setItem("userName", response.data.name);
+      }
       navigate("/dashboard");
     } catch (error) {
-      alert(error.response?.data?.detail || "Login failed");
+      setError(error.response?.data?.detail || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
     }
@@ -107,6 +112,20 @@ function Login() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-6">
+            {/* Inline error */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  className="flex items-center gap-3 p-4 rounded-2xl bg-rose-50 border border-rose-100 text-rose-700 text-sm font-bold"
+                >
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="space-y-2 group">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 px-1">
                 <Mail size={12} /> {t('ph_email')}

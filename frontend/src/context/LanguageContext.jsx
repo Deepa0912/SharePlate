@@ -113,7 +113,18 @@ const translations = {
     // Chatbot
     chat_header: "SharePlate AI",
     chat_welcome: "Hi there! I'm your SharePlate AI assistant. How can I help you today?",
-    chat_placeholder: "Type your message..."
+    chat_placeholder: "Type your message...",
+
+    // Extra v2.5.0
+    meals_rescued: "Meals Rescued",
+    priority: "Priority",
+    mission_in_progress: "Mission in progress",
+    not_found_title: "Mission Zone Not Found",
+    not_found_desc: "This sector doesn't exist on the humanitarian grid. The coordinates may have changed or the mission was completed.",
+    btn_return_base: "Return to Base",
+    btn_open_dash: "Open Dashboard",
+    profile_updated: "Profile updated successfully!",
+    profile_update_fail: "Failed to update profile. Please try again."
   },
   kn: {
     brand: "ಶೇರ್ ಪ್ಲೇಟ್",
@@ -225,7 +236,18 @@ const translations = {
     // Chatbot
     chat_header: "ಶೇರ್ ಪ್ಲೇಟ್ AI",
     chat_welcome: "ನಮಸ್ಕಾರ! ನಾನು ನಿಮ್ಮ ಶೇರ್ ಪ್ಲೇಟ್ AI ಸಹಾಯಕ. ಇವತ್ತು ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಲಿ?",
-    chat_placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಟೈಪ್ ಮಾಡಿ..."
+    chat_placeholder: "ನಿಮ್ಮ ಸಂದೇಶವನ್ನು ಟೈಪ್ ಮಾಡಿ...",
+
+    // Extra v2.5.0
+    meals_rescued: "ಊಟ ಉಳಿಸಲಾಗಿದೆ",
+    priority: "ಆದ್ಯತೆ",
+    mission_in_progress: "ಕಾರ್ಯಾಚರಣೆ ಪ್ರಗತಿಯಲ್ಲಿದೆ",
+    not_found_title: "ಮಿಷನ್ ವಲಯ ಕಂಡುಬಂದಿಲ್ಲ",
+    not_found_desc: "ಈ ವಲಯವು ತಾಂತ್ರಿಕ ಗ್ರಿಡ್‌ನಲ್ಲಿ ಅಸ್ತಿತ್ವದಲ್ಲಿಲ್ಲ. ನಿರ್ದೇಶಾಂಕಗಳು ಬದಲಾಗಿರಬಹುದು ಅಥವಾ ಮಿಷನ್ ಪೂರ್ಣಗೊಂಡಿರಬಹುದು.",
+    btn_return_base: "ಮೂಲಕ್ಕೆ ಹಿಂತಿರುಗಿ",
+    btn_open_dash: "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ",
+    profile_updated: "ಪ್ರೊಫೈಲ್ ಯಶಸ್ವಿಯಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ!",
+    profile_update_fail: "ಪ್ರೊಫೈಲ್ ನವೀಕರಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ."
   },
   hi: {
     brand: "SharePlate",
@@ -337,7 +359,18 @@ const translations = {
     // Chatbot
     chat_header: "SharePlate AI",
     chat_welcome: "नमस्ते! मैं आपका SharePlate AI सहायक हूँ। आज मैं आपकी क्या सहायता कर सकता हूँ?",
-    chat_placeholder: "अपना संदेश टाइप करें..."
+    chat_placeholder: "अपना संदेश टाइप करें...",
+
+    // Extra v2.5.0
+    meals_rescued: "भोजन बचाया गया",
+    priority: "प्राथमिकता",
+    mission_in_progress: "मिशन प्रगति पर है",
+    not_found_title: "मिशन क्षेत्र नहीं मिला",
+    not_found_desc: "यह क्षेत्र मानवीय ग्रिड पर मौजूद नहीं है। निर्देशांक बदल गए होंगे या मिशन पूरा हो गया होगा।",
+    btn_return_base: "बेस पर वापस लौटें",
+    btn_open_dash: "डैशबोर्ड खोलें",
+    profile_updated: "प्रोफ़ाइल सफलतापूर्वक अपडेट की गई!",
+    profile_update_fail: "प्रोफ़ाइल अपडेट करने में विफल। कृपया पुन: प्रयास करें।"
   },
   ta: {
     brand: "SharePlate",
@@ -449,7 +482,18 @@ const translations = {
     // Chatbot
     chat_header: "SharePlate AI",
     chat_welcome: "வணக்கம்! நான் உங்கள் SharePlate AI உதவியாளர். இன்று நான் உங்களுக்கு எவ்வாறு உதவ முடியும்?",
-    chat_placeholder: "உங்கள் செய்தியை உள்ளிடவும்..."
+    chat_placeholder: "உங்கள் செய்தியை உள்ளிடவும்...",
+
+    // Extra v2.5.0
+    meals_rescued: "உணவுகள் மீட்கப்பட்டன",
+    priority: "முன்னுரிமை",
+    mission_in_progress: "பணி நடந்து கொண்டிருக்கிறது",
+    not_found_title: "மிஷன் மண்டலம் காணப்படவில்லை",
+    not_found_desc: "இந்த பகுதி மனிதாபிமான கட்டமைப்பில் இல்லை. ஆயத்தொலைவுகள் மாறியிருக்கலாம் அல்லது பணி முடிவடைந்திருக்கலாம்.",
+    btn_return_base: "தளத்திற்குத் திரும்பு",
+    btn_open_dash: "டாஷ்போர்டைத் திற",
+    profile_updated: "சுயவிவரம் வெற்றிகரமாக புதுப்பிக்கப்பட்டது!",
+    profile_update_fail: "சுயவிவரத்தைப் புதுப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
   },
   te: {
     brand: "SharePlate",
@@ -561,7 +605,18 @@ const translations = {
     // Chatbot
     chat_header: "SharePlate AI",
     chat_welcome: "నమస్కారం! నేను మీ SharePlate AI సహాయకుడిని. ఈ రోజు నేను మీకు ఎలా సహాయపడగలను?",
-    chat_placeholder: "మీ సందేశాన్ని నమోదు చేయండి..."
+    chat_placeholder: "మీ సందేశాన్ని నమోదు చేయండి...",
+
+    // Extra v2.5.0
+    meals_rescued: "భోజనాలు ఆదా చేయబడ్డాయి",
+    priority: "ప్రాధాన్యత",
+    mission_in_progress: "మిషన్ పురోగతిలో ఉంది",
+    not_found_title: "మిషన్ జోన్ కనుగొనబడలేదు",
+    not_found_desc: "ఈ ప్రాంతం మానవతా గ్రిడ్‌లో లేదు. కోఆర్డినేట్లు మారి ఉండవచ్చు లేదా మిషన్ పూర్తయి ఉండవచ్చు.",
+    btn_return_base: "తిరిగి వెళ్ళండి",
+    btn_open_dash: "డ్యాష్‌బోర్డ్‌ను తెరవండి",
+    profile_updated: "ప్రొఫైల్ విజయవంతంగా నవీకరించబడింది!",
+    profile_update_fail: "ప్రొఫైల్ నవీకరించడంలో విఫలమైంది. దయచేసి మళ్ళీ ప్రయత్నించండి."
   }
 };
 

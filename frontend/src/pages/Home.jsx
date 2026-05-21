@@ -266,9 +266,9 @@ function Home() {
               <span className="text-2xl font-black text-slate-900 tracking-tight">SharePlate</span>
             </div>
             <div className="flex gap-10 text-slate-500 text-sm font-black uppercase tracking-widest">
-              <a href="#" className="hover:text-emerald-600 transition-colors">Safety</a>
-              <a href="#" className="hover:text-emerald-600 transition-colors">Privacy</a>
-              <a href="#" className="hover:text-emerald-600 transition-colors">Terms</a>
+              <Link to="/analytics" className="hover:text-emerald-600 transition-colors">Impact</Link>
+              <Link to="/leaderboard" className="hover:text-emerald-600 transition-colors">Heroes</Link>
+              <Link to="/signup" className="hover:text-emerald-600 transition-colors">Join</Link>
             </div>
           </div>
           <div className="text-center md:text-left text-slate-400 text-xs font-bold leading-relaxed max-w-md">

@@ -92,9 +92,22 @@
   --navbar-color: rgba(255, 255, 255, 0.95);
 }
 
+.dark {
+  --bg-gradient-from: #0f172a;
+  --bg-gradient-via: #020617;
+  --bg-gradient-to: #064e3b;
+  --bg-light: #0f172a;
+  --text-header: #f8fafc;
+  --text-body: #94a3b8;
+  --border-primary: #1e293b;
+  --navbar-color: rgba(15, 23, 42, 0.9);
+}
+
 body {
   font-family: 'Inter', sans-serif;
   color: var(--text-body);
+  background-color: var(--bg-light);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1,

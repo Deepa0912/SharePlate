@@ -4,7 +4,28 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+
+    <!-- SEO -->
+    <title>SharePlate — AI-Powered Food Rescue Platform</title>
+    <meta name="description" content="SharePlate connects food donors with verified NGOs using AI. Rescue surplus food, reduce waste, and nourish communities across India." />
+    <meta name="theme-color" content="#059669" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="SharePlate — AI-Powered Food Rescue" />
+    <meta property="og:description" content="Join the humanitarian movement. Donate surplus food and make an impact today." />
+    <meta property="og:type" content="website" />
+
+    <!-- Dark mode init — must run before React renders to prevent white flash -->
+    <script>
+      (function () {
+        try {
+          var theme = localStorage.getItem("theme");
+          if (theme === "dark") {
+            document.documentElement.classList.add("dark");
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

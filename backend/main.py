@@ -19,6 +19,7 @@ from karma_engine import compute_user_karma, build_leaderboard  # <-- Karma engi
 from recipe_engine import suggest_recipes, find_meal_kit_match  # <-- AI Recipe engine
 from eco_engine import calculate_eco_impact            # <-- Eco engine
 from postcard_engine import generate_impact_postcard   # <-- Postcard engine
+from analytics_engine import parse_meals_saved         # <-- ADDED: For individual meal estimation
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
@@ -163,6 +164,7 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict], all_donations:
         "id": str(donation.get("_id", "")),
         "food_name": donation.get("food_name", ""),
         "quantity": donation.get("quantity", ""),
+        "meals_saved": parse_meals_saved(donation.get("quantity", "0")),
         "expiry_time": donation.get("expiry_time", ""),
         "location": donation.get("location", ""),
         "donor_id": donation.get("donor_id", ""),
@@ -216,6 +218,11 @@ class User(BaseModel):
     email: str
     password: str
     role: str
+
+
+class UserUpdate(BaseModel):
+    email: str
+    name: str = None
 
 
 class LoginData(BaseModel):
@@ -349,6 +356,32 @@ def login(data: LoginData):
         "name":    user.get("name", ""),
         "role":    user.get("role", "donor"),
     }
+
+
+# ===========================================================================
+# USER PROFILE UPDATE API
+# ===========================================================================
+
+@app.put("/user/update")
+def update_user(data: UserUpdate):
+    """Update user profile information."""
+    user = users_collection.find_one({"email": data.email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    update_data = {}
+    if data.name:
+        update_data["name"] = data.name
+
+    if not update_data:
+        return {"message": "No changes provided"}
+
+    users_collection.update_one(
+        {"email": data.email},
+        {"$set": update_data}
+    )
+
+    return {"message": "User updated successfully"}
 
 
 # ===========================================================================
