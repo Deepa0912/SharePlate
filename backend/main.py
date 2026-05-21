@@ -9,6 +9,7 @@ from food_classifier import classify_food             # <-- AI food classifier
 from analytics_engine import compute_analytics         # <-- Analytics engine
 from chatbot_engine import generate_chat_response      # <-- AI Chatbot engine
 from deep_translator import GoogleTranslator          # <-- Deep Translator
+from typing import Optional                            # <-- Typing
 from karma_engine import compute_user_karma, build_leaderboard  # <-- Karma engine
 from recipe_engine import suggest_recipes, find_meal_kit_match  # <-- AI Recipe engine
 from eco_engine import calculate_eco_impact            # <-- Eco engine
@@ -518,17 +519,19 @@ async def donate_food(
     expiry_time: str        = Form(...),
     location:    str        = Form(...),
     donor_id:    str        = Form(...),
-    image:       UploadFile = File(...),
+    image:       Optional[UploadFile] = File(None),
 ):
     """
     Accept a food donation, upload image to Cloudinary,
     predict AI priority, and store everything in MongoDB.
     """
 
-    # --- Upload image to Cloudinary ---
-    contents    = await image.read()
-    uploaded    = cloudinary.uploader.upload(contents)
-    image_url   = uploaded["secure_url"]
+    # --- Upload image to Cloudinary (If provided) ---
+    image_url = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c" # Professional fallback
+    if image:
+        contents    = await image.read()
+        uploaded    = cloudinary.uploader.upload(contents)
+        image_url   = uploaded["secure_url"]
 
     # --- AI Priority Prediction ---
     priority = predict_priority(

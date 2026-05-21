@@ -11,7 +11,7 @@ import API from "../services/api";
 
 const AUTO_FILL_THRESHOLD = 80;
 
-function FoodClassifier({ onFoodDetected }) {
+function FoodClassifier({ onFoodDetected, setImageFile }) {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
@@ -23,6 +23,7 @@ function FoodClassifier({ onFoodDetected }) {
   // ── Classify ──────────────────────────────────────────────────────────────
   const classifyImage = useCallback(async (file) => {
     if (!file) return;
+    if (setImageFile) setImageFile(file);
 
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target.result);
@@ -79,10 +80,10 @@ function FoodClassifier({ onFoodDetected }) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`relative border-2 border-dashed rounded-2xl min-h-[150px] flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-200 ${dragging
-            ? "border-emerald-500 bg-emerald-50"
-            : preview
-              ? "border-slate-200 min-h-[220px]"
-              : "border-emerald-200 bg-emerald-50/40 hover:border-emerald-400 hover:bg-emerald-50"
+          ? "border-emerald-500 bg-emerald-50"
+          : preview
+            ? "border-slate-200 min-h-[220px]"
+            : "border-emerald-200 bg-emerald-50/40 hover:border-emerald-400 hover:bg-emerald-50"
           }`}
       >
         <input
