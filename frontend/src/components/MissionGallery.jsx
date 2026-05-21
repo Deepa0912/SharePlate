@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Heart, MapPin, Calendar, Star, Loader2 } from "lucide-react";
 import API from "../services/api";

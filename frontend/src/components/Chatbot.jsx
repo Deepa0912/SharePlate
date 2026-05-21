@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Send, Bot, User, Loader2, Mic, MicOff, Sparkles, ChevronDown } from "lucide-react";
+import { MessageCircle, X, Send, Bot, User, Loader2, Mic, MicOff, Sparkles, ChevronDown, RotateCcw } from "lucide-react";
 import axios from "axios";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -106,7 +106,13 @@ export default function Chatbot() {
 
     setInputValue("");
     setShowQuickPrompts(false);
-    setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+
+    // If it's a retry, we don't need to add the user message again if it's already there
+    // But for simplicity, we'll just treat retries as a new call with the previous text
+    if (!textOverride) {
+      setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
+    }
+
     setIsLoading(true);
 
     try {
@@ -114,20 +120,18 @@ export default function Chatbot() {
       const API_BASE_URL = window.location.hostname === "localhost" ? "http://localhost:8000" : window.location.origin;
       const response = await axios.post(`${API_BASE_URL}/chat`, { message: userMsg, history, lang });
 
-      let rawResponse = response.data.response;
-      let cleanResponse = rawResponse;
-      const actionMatch = rawResponse.match(/\[ACTION_JSON\]([\s\S]*?)\[\/ACTION_JSON\]/);
-      if (actionMatch) {
-        try {
-          const actionPayload = JSON.parse(actionMatch[1].trim());
-          cleanResponse = rawResponse.replace(/\[ACTION_JSON\]([\s\S]*?)\[\/ACTION_JSON\]/, "").trim();
-          window.dispatchEvent(new CustomEvent("sp-ai-action", { detail: actionPayload }));
-        } catch (e) { console.error("Failed to parse AI action:", e); }
-      }
-
-      setMessages((prev) => [...prev, { role: "model", content: cleanResponse }]);
-    } catch {
-      setMessages((prev) => [...prev, { role: "model", content: "Connection failed. Please try again in a moment. 🔄" }]);
+      setMessages((prev) => [...prev, {
+        role: "model",
+        content: response.data.response,
+        engine: response.data.engine // Store the engine info
+      }]);
+    } catch (err) {
+      setMessages((prev) => [...prev, {
+        role: "model",
+        content: "Oops! Something went wrong with the AI connection. Please try again. 🔄",
+        isError: true,
+        lastQuery: userMsg
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -193,14 +197,31 @@ export default function Chatbot() {
                       : "bg-white border border-slate-100 text-slate-800 rounded-bl-md shadow-sm"
                       }`}
                   >
-                    {msg.content}
+                    <div className="flex flex-col gap-2">
+                      {msg.content}
+                      {msg.engine && (
+                        <div className="text-[9px] font-black uppercase tracking-widest text-slate-400 opacity-60 mt-1">
+                          Powered by {msg.engine}
+                        </div>
+                      )}
+                      {msg.isError && (
+                        <button
+                          onClick={() => sendMessage(msg.lastQuery)}
+                          className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 rounded-xl border border-emerald-500/20 transition-all active:scale-95 self-start mt-1"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Retry
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {msg.role === "user" && (
-                    <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
-                      <User className="w-3.5 h-3.5 text-slate-500" />
-                    </div>
-                  )}
+                  {
+                    msg.role === "user" && (
+                      <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <User className="w-3.5 h-3.5 text-slate-500" />
+                      </div>
+                    )
+                  }
                 </motion.div>
               ))}
 

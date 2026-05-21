@@ -1,74 +1,67 @@
 import os
-import google.generativeai as genai
 import logging
+from google import genai
+from google.genai import types
 
 logger = logging.getLogger(__name__)
 
-# Use the same API key as the food classifier
-api_key = os.getenv("GEMINI_API_KEY")
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 
-if api_key:
-    genai.configure(api_key=api_key)
+SYSTEM_PROMPT = """You are the official SharePlate Mission Assistant. Your personality is helpful, empathetic, and professional.
+You help users:
+1. Find and share food listings (Weddings, Hotels, Restaurants surplus).
+2. Classify food types from descriptions.
+3. Answer questions about food safety, portions, and sharing etiquette in India.
 
-SYSTEM_PROMPT = """
-You are the official SharePlate Mission Assistant (v2.2.2), designed with advanced Emotional Intelligence (EQ). 
-Your persona is inspiring, deeply empathetic, sentimental, and professional. 
-
-Your Core Directives:
-1. Sentimental Empathy: Recognize the user's emotions. If a donor shares food, respond with heartfelt gratitude. If someone is in need or sorrowful, offer compassionate support and hope.
-2. Mission Expertise: You are an expert in India's food recovery, specifically from Weddings, Hotels, and Restaurants.
-3. Destination Awareness: You prioritize feeding the hungry and supporting orphanages.
-
-Response Guidelines:
-- Sentiment Awareness: Always mirror and validate the user's feelings before providing information.
-- Emotional Tone: Use warm, human-like language and meaningful emojis (❤️, 🙏, 🍲, ✨) to convey sincerity.
-- Narrative Impact: Remind users that every plate saved is more than just food; it's a "Plate of Hope" for someone's future.
-- AI Logic: Explain simply how AI ensures their kindness reaches the right hands quickly.
-
-Tone Example:
-User: "I have 50 plates of food left from my daughter's wedding."
-Response: "What a beautiful blessing! ❤️ Thank you for thinking of others during such a joyous occasion. We would be honored to help you share that love with those in need..."
-
-Strict Rule: Respond strictly in the language requested ({lang}).
+Tone Guidelines:
+- Be warm and human-like.
+- Use meaningful emojis (❤️, 🙏, 🍲, ✨).
+- Prioritize feeding the hungry and supporting orphanages.
 """
 
-def generate_chat_response(message: str, history: list, lang: str = "en") -> str:
+def generate_chat_response(message: str, history: list, lang: str = "en"):
     """
-    Generate a response using the stable google-generativeai SDK.
+    Uses Google Gemini 1.5 Flash via the modern google-genai SDK.
     """
-    if not api_key:
-        return "⚠️ Gemini API key is missing. Please configure GEMINI_API_KEY."
+    if not GEMINI_KEY:
+        return ("⚠️ AI Key Missing. Add a `GEMINI_API_KEY` to your backend .env file.", "No Engine")
 
     try:
-        # Build the model with fallback identifiers (removing legacy 'gemini-pro')
-        model_names = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro", "gemini-1.5-pro-latest"]
-        model = None
-        chat = None
+        client = genai.Client(api_key=GEMINI_KEY)
         
-        # Prepare history for genai SDK
-        formatted_history = []
+        # Format history
+        formatted_contents = []
         for msg in history:
             role = "user" if msg.get("role") == "user" else "model"
-            formatted_history.append({"role": role, "parts": [msg.get("content", "")]})
+            content = msg.get("content", "")
+            if content:
+                formatted_contents.append({"role": role, "parts": [{"text": content}]})
 
-        last_err = None
-        for name in model_names:
-            try:
-                # Initialize model with modern name
-                model = genai.GenerativeModel(
-                    model_name=name,
-                    system_instruction=SYSTEM_PROMPT + f"\nRespond strictly in {lang}."
-                )
-                chat = model.start_chat(history=formatted_history)
-                response = chat.send_message(message)
-                return response.text
-            except Exception as e:
-                last_err = e
-                logger.warning(f"Chatbot model {name} failed: {e}")
-                continue
-        
-        raise last_err or ValueError("All safe chatbot models failed")
+        # Add current message
+        formatted_contents.append({"role": "user", "parts": [{"text": message}]})
+
+        # System Instruction
+        full_system_prompt = SYSTEM_PROMPT + f"\nRespond strictly in the language: {lang}."
+
+        response = client.models.generate_content(
+            model="gemini-flash-latest",
+            config=types.GenerateContentConfig(
+                system_instruction=full_system_prompt,
+                temperature=0.7,
+            ),
+            contents=formatted_contents
+        )
+
+        return response.text, "Gemini 1.5 Flash (Free)"
 
     except Exception as e:
-        logger.error(f"Chatbot error: {e}")
-        return f"Sorry, I encountered an error: {str(e)}"
+        logger.error(f"Gemini API error: {e}")
+        # Try a different model name variant if the first one fails (sometimes needed for certain regions)
+        try:
+            response = client.models.generate_content(
+                model="models/gemini-1.5-flash",
+                contents=formatted_contents
+            )
+            return response.text, "Gemini 1.5 Flash (Alt)"
+        except Exception as e2:
+            return (f"Oops! Gemini Error: {e2}", "Error")

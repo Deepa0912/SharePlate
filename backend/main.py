@@ -1,10 +1,4 @@
-"""
-main.py
-=======
-SharePlate FastAPI Backend
-Includes AI-powered donation priority prediction via priority_engine.py
-"""
-
+# SharePlate FastAPI Backend - v2.5.0 HYBRID AI READY
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -951,8 +945,8 @@ def chat_endpoint(req: ChatRequest):
     Handle chat messages from the AI assistant frontend.
     """
     try:
-        response_text = generate_chat_response(req.message, req.history, req.lang)
-        return {"response": response_text}
+        response_text, engine_name = generate_chat_response(req.message, req.history, req.lang)
+        return {"response": response_text, "engine": engine_name}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 

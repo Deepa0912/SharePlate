@@ -13,15 +13,15 @@ export default function LanguageSelector() {
   ];
 
   return (
-    <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 shadow-sm hover:border-green-500 transition-colors">
-      <Globe className="w-4 h-4 text-green-600" />
+    <div className="relative group/lang flex items-center gap-2.5 px-4 py-2 bg-white/50 backdrop-blur-md border border-slate-100 rounded-full shadow-sm hover:border-emerald-200 transition-all">
+      <Globe className="w-4 h-4 text-emerald-600 animate-pulse-slow" />
       <select
         value={lang}
         onChange={(e) => changeLanguage(e.target.value)}
-        className="bg-transparent text-sm font-medium text-gray-700 focus:outline-none cursor-pointer pr-1"
+        className="bg-transparent text-[10px] font-black text-slate-700 uppercase tracking-widest focus:outline-none cursor-pointer appearance-none pr-1"
       >
         {languages.map((l) => (
-          <option key={l.code} value={l.code} className="text-gray-900 bg-white">
+          <option key={l.code} value={l.code} className="text-slate-900 bg-white font-sans normal-case tracking-normal">
             {l.name}
           </option>
         ))}

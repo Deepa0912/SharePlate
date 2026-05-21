@@ -26,6 +26,7 @@ import {
 import Navbar from "../components/Navbar";
 import { useLanguage } from "../context/LanguageContext";
 import LanguageSelector from "../components/LanguageSelector";
+import API from "../services/api";
 
 const SettingsCard = ({ children, title, icon: Icon }) => (
     <motion.div
@@ -120,7 +121,6 @@ function Settings() {
         setSuccess("");
         setLoading(true);
         try {
-            const API = (await import("../services/api")).default;
             await API.put("/user/update", { email: initialEmail, name: userName });
             localStorage.setItem("userName", userName);
             setSuccess(t('profile_updated'));
@@ -177,11 +177,11 @@ function Settings() {
 
                     <button
                         onClick={handleSave}
-                        disabled={isSaving}
-                        className={`px-8 py-4 rounded-[1.5rem] font-black shadow-xl scale-100 hover:scale-[1.02] active:scale-95 transition-all text-sm ${isSaving ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
+                        disabled={loading}
+                        className={`px-8 py-4 rounded-[1.5rem] font-black shadow-xl scale-100 hover:scale-[1.02] active:scale-95 transition-all text-sm ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-700"
                             }`}
                     >
-                        {isSaving ? "Saving..." : "Save Changes"}
+                        {loading ? "Saving..." : "Save Changes"}
                     </button>
                 </header>
 
@@ -277,20 +277,6 @@ function Settings() {
                     </div>
                 </div>
             </main>
-
-            <AnimatePresence>
-                {showSaveAlert && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
-                        className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] px-8 py-4 bg-slate-900 text-white dark:bg-emerald-600 rounded-full font-black flex items-center gap-3 shadow-2xl border border-white/10"
-                    >
-                        <CheckCircle className="text-emerald-500" size={20} />
-                        Preferences securely updated
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }

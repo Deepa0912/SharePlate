@@ -16,6 +16,7 @@ import {
 import API from "../services/api";
 import { useLanguage } from "../context/LanguageContext";
 import Navbar from "../components/Navbar";
+import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Droplets, Leaf, Package, MapPin, TrendingUp, Info } from "lucide-react";
 
 const PIE_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"];

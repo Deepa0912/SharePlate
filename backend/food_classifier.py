@@ -38,7 +38,7 @@ def classify_food(image_bytes: bytes, top_k: int = 5) -> dict:
 
     try:
         # Try different model identifiers to fix the 404 "not found" error
-        model_names = ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro-vision"]
+        model_names = ["gemini-flash-latest", "gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro-vision"]
         response = None
         last_error = None
 
