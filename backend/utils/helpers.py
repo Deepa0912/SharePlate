@@ -25,7 +25,7 @@ def serialize_doc(doc: dict) -> dict:
         elif isinstance(value, ObjectId):
             result[key] = str(value)
         elif isinstance(value, datetime):
-            result[key] = value.isoformat()
+            result[key] = value.isoformat().replace("+00:00", "Z")
         elif isinstance(value, dict):
             result[key] = serialize_doc(value)
         elif isinstance(value, list):

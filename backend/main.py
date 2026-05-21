@@ -17,7 +17,7 @@ from postcard_engine import generate_impact_postcard   # <-- Postcard engine
 from analytics_engine import parse_meals_saved         # <-- ADDED: For individual meal estimation
 import bcrypt
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import os
 import re
@@ -59,18 +59,20 @@ def _parse_expiry_minutes(expiry_time: str) -> int:
 
 def _parse_datetime(value: str) -> datetime:
     try:
-        return datetime.fromisoformat(value)
+        # Standardize 'Z' to '+00:00' for older Python compatibility if needed, 
+        # but fromisoformat handles 'Z' in 3.11+
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except Exception:
         try:
-            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f").replace(tzinfo=timezone.utc)
         except Exception:
-            return datetime.utcnow()
+            return datetime.now(timezone.utc)
 
 
 def _build_spoilage_info(food_name: str, expiry_time: str, created_at: str) -> dict:
     total_minutes = _parse_expiry_minutes(expiry_time)
     created_dt = _parse_datetime(created_at)
-    age_minutes = max(0, int((datetime.utcnow() - created_dt).total_seconds() / 60))
+    age_minutes = max(0, int((datetime.now(timezone.utc) - created_dt).total_seconds() / 60))
     remaining_minutes = max(0, total_minutes - age_minutes)
 
     if remaining_minutes <= 0:
@@ -131,7 +133,7 @@ def _build_donation_payload(donation: dict, all_ngos: list[dict], all_donations:
     spoilage = _build_spoilage_info(
         food_name=donation.get("food_name", ""),
         expiry_time=donation.get("expiry_time", ""),
-        created_at=donation.get("created_at", datetime.utcnow().isoformat()),
+        created_at=donation.get("created_at", datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")),
     )
 
     meal_suggestions = donation.get("meal_suggestions") or suggest_recipes(
@@ -542,7 +544,7 @@ async def donate_food(
 
     # --- Build donation document ---
     meal_suggestions = suggest_recipes(food_name, quantity)
-    spoilage = _build_spoilage_info(food_name, expiry_time, datetime.utcnow().isoformat())
+    spoilage = _build_spoilage_info(food_name, expiry_time, datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
     eco_impact = calculate_eco_impact(food_name, quantity)
 
     donation = {
@@ -554,7 +556,7 @@ async def donate_food(
         "image_url":        image_url,
         "status":           "Pending",
         "priority":         priority,
-        "created_at":       datetime.utcnow().isoformat(),
+        "created_at":       datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "meal_suggestions": meal_suggestions,
         "spoilage":         spoilage,
         "eco_impact":       eco_impact,
@@ -801,7 +803,7 @@ def book_donation(donation_id: str, payload: BookRequest):
         {"$set": {
             "status": "Booked",
             "booked_by": payload.email,
-            "booked_at": datetime.utcnow().isoformat()
+            "booked_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }}
     )
     return {"message": "Donation booked successfully"}
@@ -856,7 +858,7 @@ def collect_donation_endpoint(donation_id: str):
         {"_id": donation["_id"]},
         {"$set": {
             "status": "Collected",
-            "collected_at": datetime.utcnow().isoformat()
+            "collected_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         }}
     )
     return {"message": "Donation marked as collected"}
@@ -958,7 +960,7 @@ def health_check():
     return {
         "status": "ok", 
         "version": "2.5.0",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "mission": "Zero Hunger"
     }
 

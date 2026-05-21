@@ -11,7 +11,8 @@ import NGOBadge from "../components/NGOBadge";
 import FoodClassifier from "../components/FoodClassifier";
 import { useLanguage } from "../context/LanguageContext";
 import Navbar from "../components/Navbar";
-import { Heart, Star, Package, MapPin, Search, Trash2, Clock, CheckCircle, ExternalLink, Calendar, Info, Trophy, Droplets, Leaf, TrendingUp, Users, ArrowRight, Table } from "lucide-react";
+import ImpactCertificate from "../components/ImpactCertificate";
+import { Heart, Star, Package, MapPin, Search, Trash2, Clock, CheckCircle, ExternalLink, Calendar, Info, Trophy, Droplets, Leaf, TrendingUp, Users, ArrowRight, Table, Award } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
@@ -214,9 +215,13 @@ const SustainabilityAnalytics = ({ data }) => (
 
 // ── Logic Helpers ────────────────────────────────────────────────────────────
 const getDynamicExpiry = (createdAt, expiryLabel) => {
-  if (!expiryLabel) return { label: "Unknown", percentRemaining: 100, isExpired: false };
+  if (!expiryLabel || !createdAt) return { label: "Unknown", percentRemaining: 100, isExpired: false };
 
-  const createdDate = new Date(createdAt);
+  // Ensure timezone suffix for consistent UTC parsing
+  const dateStr = (createdAt?.endsWith('Z') || createdAt?.includes('+')) ? createdAt : `${createdAt}Z`;
+  const createdDate = new Date(dateStr);
+  if (isNaN(createdDate.getTime())) return { label: "Unknown", percentRemaining: 100, isExpired: false };
+
   const now = new Date();
 
   // Extract number of hours from label like "4 hours"
@@ -272,6 +277,7 @@ function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [postcardData, setPostcardData] = useState(null);
+  const [certData, setCertData] = useState(null);
   const [modalConfig, setModalConfig] = useState({ isOpen: false, title: "", message: "", type: "alert", onConfirm: null, onCancel: null });
 
   const myDonations = useMemo(() => donations.filter(d => d.donor_id === currentUserEmail), [donations, currentUserEmail]);
@@ -400,6 +406,10 @@ function Dashboard() {
     catch (err) { await customAlert("Postcard generation failed."); }
   };
 
+  const handleViewCertificate = (don) => {
+    setCertData({ donation: don, ngo: ngoMap[don.id] });
+  };
+
   const filtered = useMemo(() => {
     return donations.filter(d => {
       if (activeTab === "available" && (d.status === "Booked" || d.status === "Collected")) return false;
@@ -516,7 +526,7 @@ function Dashboard() {
                   <p className="text-slate-400 font-black uppercase tracking-widest text-[9px]">Syncing with Peer Hubs...</p>
                 </div>
               ) : (
-                <div className="grid md:grid-cols-2 gap-8">
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
                   <AnimatePresence mode="popLayout">
                     {filtered.map(don => (
                       <motion.div
@@ -534,6 +544,7 @@ function Dashboard() {
                           handleCancelBooking={handleCancelBooking}
                           handleDelete={handleDelete}
                           handleViewPostcard={handleViewPostcard}
+                          handleViewCertificate={handleViewCertificate}
                           currentUserEmail={currentUserEmail}
                           ngo={ngoMap[don.id]}
                           ngoLoading={ngoLoading[don.id]}
@@ -555,7 +566,7 @@ function Dashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              className="bg-slate-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden border border-white/5"
+              className="bg-slate-900 rounded-[2rem] p-8 shadow-2xl relative overflow-hidden border border-white/5"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
               <div className="relative z-10">
@@ -567,7 +578,7 @@ function Dashboard() {
                 </h3>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="p-1 bg-white/5 border border-white/10 rounded-3xl mb-8 overflow-hidden">
+                  <div className="p-1 bg-white/5 border border-white/10 rounded-2xl mb-6 overflow-hidden">
                     <FoodClassifier onFoodDetected={handleFoodDetected} setImageFile={setImage} />
                   </div>
 
@@ -613,6 +624,7 @@ function Dashboard() {
 
       <AnimatePresence>
         {postcardData && <Postcard data={postcardData} onClose={() => setPostcardData(null)} />}
+        {certData && <ImpactCertificate donation={certData.donation} ngo={certData.ngo} onClose={() => setCertData(null)} />}
       </AnimatePresence>
       <Modal modalConfig={modalConfig} />
     </div>
@@ -621,34 +633,34 @@ function Dashboard() {
 
 // ── Components ───────────────────────────────────────────────────────────────
 
-const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBooking, handleDelete, handleViewPostcard, currentUserEmail, ngo, ngoLoading }) => {
+const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBooking, handleDelete, handleViewPostcard, handleViewCertificate, currentUserEmail, ngo, ngoLoading }) => {
   const expiryInfo = getDynamicExpiry(donation.created_at, donation.expiry_time);
   const isMine = donation.donor_id === currentUserEmail;
   const isBookedByMe = donation.status === 'Booked' && donation.booked_by === currentUserEmail;
 
   return (
-    <article className="bg-white border border-slate-100 rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 group relative flex flex-col h-full active:scale-[0.99] cursor-default">
-      <div className="relative h-60 overflow-hidden shrink-0">
+    <article className="bg-white border border-slate-100 rounded-[1.25rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-700 group relative flex flex-col h-full active:scale-[0.99] cursor-default text-xs">
+      <div className="relative h-32 overflow-hidden shrink-0">
         <img src={donation.image_url} alt={donation.food_name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-        <div className="absolute top-6 right-6 flex gap-2">
+        <div className="absolute top-3 right-3 flex gap-2">
           <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest backdrop-blur-xl shadow-lg border border-white/20 ${donation.priority === 'HIGH' ? 'bg-rose-500/80 text-white' :
             donation.priority === 'MEDIUM' ? 'bg-amber-500/80 text-white' : 'bg-emerald-500/80 text-white'
             }`}>
             {donation.priority || 'MEDIUM'}
           </span>
         </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       </div>
 
-      <div className="p-10 flex flex-col grow">
-        <div className="flex justify-between items-start mb-8 gap-4">
+      <div className="p-4 flex flex-col grow">
+        <div className="flex justify-between items-start mb-2 gap-4">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight mb-2 grow group-hover:text-emerald-700 transition-colors">{donation.food_name}</h3>
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
+            <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight mb-1 grow group-hover:text-emerald-700 transition-colors">{donation.food_name}</h3>
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400">
               <Calendar size={12} /> {new Date(donation.created_at).toLocaleDateString()}
             </div>
           </div>
-          <span className={`shrink-0 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${expiryInfo.isExpired ? 'bg-rose-50 text-rose-600 border-rose-100' :
+          <span className={`shrink-0 px-2 py-0.5 rounded-lg text-[8px] font-black uppercase tracking-widest border ${expiryInfo.isExpired ? 'bg-rose-50 text-rose-600 border-rose-100' :
             donation.status === 'Booked' ? 'bg-blue-50 text-blue-600 border-blue-100' :
               donation.status === 'Collected' ? 'bg-slate-50 text-slate-600 border-slate-200' : 'bg-emerald-50 text-emerald-600 border-emerald-100'
             }`}>
@@ -656,13 +668,13 @@ const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBook
           </span>
         </div>
 
-        <div className="space-y-4 mb-8 grow">
+        <div className="space-y-1.5 mb-3 grow">
           <CardInfo icon={<Package size={14} />} label="Payload" value={donation.quantity} />
           <CardInfo icon={<Clock size={14} />} label="Dynamic Expiry" value={expiryInfo.label} color={expiryInfo.isExpired ? "text-rose-500" : "text-emerald-600"} />
           <CardInfo icon={<MapPin size={14} />} label="Deployment" value={donation.location} />
         </div>
 
-        <div className="h-2 w-full bg-slate-50 rounded-full mb-8 overflow-hidden shrink-0 border border-slate-100/50">
+        <div className="h-1.5 w-full bg-slate-50 rounded-full mb-3 overflow-hidden shrink-0 border border-slate-100/50">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${expiryInfo.percentRemaining}%` }}
@@ -674,7 +686,7 @@ const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBook
 
         <NGOBadge ngo={ngo} loading={ngoLoading} />
 
-        <div className="mt-10 pt-8 border-t border-slate-50 grid gap-3 shrink-0">
+        <div className="mt-4 pt-4 border-t border-slate-50 grid gap-2 shrink-0">
           {(donation.status === 'Pending' || donation.status === 'Available' || donation.status === 'Approved' || !donation.status) && !expiryInfo.isExpired && (
             <button
               onClick={() => handleBook(donation.id)}
@@ -694,9 +706,17 @@ const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBook
           )}
 
           {donation.status === 'Collected' && (
-            <button onClick={() => handleViewPostcard(donation.id)} className="w-full py-5 bg-slate-900 text-white rounded-3xl font-black transition-all hover:bg-slate-800 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3">
-              <span className="text-xl">💌</span> Review Postcard
-            </button>
+            <div className="grid gap-2">
+              <button
+                onClick={() => handleViewCertificate(donation)}
+                className="w-full py-4 bg-emerald-600 text-white rounded-3xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-700 shadow-xl shadow-emerald-500/10 active:scale-95 transition-all"
+              >
+                <Award size={14} /> View Impact Certificate
+              </button>
+              <button onClick={() => handleViewPostcard(donation.id)} className="w-full py-4 bg-slate-900 text-white rounded-3xl font-black transition-all hover:bg-slate-800 shadow-xl shadow-slate-900/10 flex items-center justify-center gap-3">
+                <span className="text-xl">💌</span> Review Postcard
+              </button>
+            </div>
           )}
 
           <button onClick={() => handleDelete(donation.id)} className="w-full py-2 text-slate-300 hover:text-rose-400 font-black text-[9px] uppercase tracking-[0.2em] transition-colors flex items-center justify-center gap-2 mt-2 opacity-50 hover:opacity-100">
@@ -710,8 +730,8 @@ const DonationCard = ({ donation, t, handleBook, handleCollect, handleCancelBook
 
 const CardInfo = ({ icon, label, value, color = "text-slate-900" }) => (
   <div className="flex items-center justify-between text-xs">
-    <div className="text-slate-400 font-black uppercase text-[10px] tracking-widest flex items-center gap-3">
-      <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
+    <div className="text-slate-400 font-black uppercase text-[9px] tracking-widest flex items-center gap-2">
+      <div className="w-6 h-6 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-500 transition-colors">
         {icon}
       </div>
       {label}
@@ -736,7 +756,7 @@ const Modal = ({ modalConfig }) => (
   <AnimatePresence>
     {modalConfig.isOpen && (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md">
-        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[3rem] p-12 shadow-2xl max-w-sm w-full text-center space-y-8 pointer-events-auto">
+        <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }} className="bg-white rounded-[2rem] p-10 shadow-2xl max-w-sm w-full text-center space-y-8 pointer-events-auto">
           <div className={`w-24 h-24 rounded-[2rem] mx-auto flex items-center justify-center text-4xl shadow-2xl ${modalConfig.type === 'confirm' ? 'bg-amber-100 text-amber-600 shadow-amber-200/50' : 'bg-emerald-100 text-emerald-600 shadow-emerald-200/50'}`}>
             {modalConfig.type === 'confirm' ? <Info size={40} /> : <Star size={40} />}
           </div>
@@ -760,9 +780,9 @@ const Postcard = ({ data, onClose }) => (
   <AnimatePresence>
     {data && (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[300] flex items-center justify-center p-6 bg-slate-950/80 backdrop-blur-2xl">
-        <motion.div initial={{ scale: 0.8, rotate: -2 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0.8, rotate: 2 }} className="bg-white rounded-[3rem] overflow-hidden shadow-2xl max-w-xl w-full relative border-[12px] border-white active:scale-[1.01] transition-transform">
+        <motion.div initial={{ scale: 0.8, rotate: -2 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0.8, rotate: 2 }} className="bg-white rounded-[2rem] overflow-hidden shadow-2xl max-w-xl w-full relative border-[12px] border-white active:scale-[1.01] transition-transform">
           <button onClick={onClose} className="absolute top-4 right-4 w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-500 hover:bg-rose-500 hover:text-white transition-all z-20 font-bold shadow-xl">✕</button>
-          <div className="p-12 space-y-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
+          <div className="p-10 space-y-10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:20px_20px]">
             <div className="flex justify-between items-start">
               <div className="text-6xl grayscale opacity-20">🇮🇳</div>
               <div className="w-24 h-32 border-4 border-dashed border-slate-200 rounded-xl flex items-center justify-center p-4 transform rotate-12">
@@ -776,7 +796,7 @@ const Postcard = ({ data, onClose }) => (
               <h3 className="text-5xl font-black text-slate-900 tracking-tighter">{data.title}</h3>
               <p className="text-2xl font-bold text-emerald-600 leading-tight">"{data.donor_message}"</p>
             </div>
-            <div className="bg-slate-50 rounded-[2rem] p-8 border border-slate-100">
+            <div className="bg-slate-50 rounded-[1.5rem] p-6 border border-slate-100">
               <p className="italic text-slate-600 font-medium leading-relaxed text-xl underline decoration-emerald-200 decoration-4 underline-offset-8">"{data.story}"</p>
             </div>
             <div className="flex justify-between items-end border-t-4 border-double border-slate-100 pt-8">

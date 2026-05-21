@@ -141,7 +141,7 @@ function Home() {
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                className="bg-white/5 backdrop-blur-md rounded-[3rem] p-12 border border-white/10 hover:border-emerald-500/30 transition-all group"
+                className="bg-white/5 backdrop-blur-md rounded-[2rem] p-8 border border-white/10 hover:border-emerald-500/30 transition-all group"
               >
                 <div className={`w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mb-8 ${s.color} border border-white/10 group-hover:scale-110 transition-transform`}>
                   {s.icon}
@@ -183,7 +183,7 @@ function Home() {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {sources.map((s, i) => (
-              <div key={i} className={`p-10 rounded-[2.5rem] border ${s.border} ${s.color} transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-slate-200/50 group cursor-default`}>
+              <div key={i} className={`p-6 rounded-[1.5rem] border ${s.border} ${s.color} transition-all duration-500 hover:scale-[1.05] hover:shadow-2xl hover:shadow-slate-200/50 group cursor-default`}>
                 <div className="text-6xl mb-8 transform transition-transform group-hover:scale-110 duration-500 drop-shadow-sm">{s.icon}</div>
                 <h4 className="text-2xl font-black text-slate-900 mb-4 tracking-tight">{s.title}</h4>
                 <p className="text-slate-600 leading-relaxed font-medium">{s.desc}</p>
@@ -194,7 +194,7 @@ function Home() {
       </div>
 
       {/* How It Works - High Resolution Process */}
-      <div className="py-32 px-6 bg-emerald-600 text-white rounded-[4rem] mx-4 my-16 overflow-hidden relative shadow-2xl shadow-emerald-200">
+      <div className="py-24 px-6 bg-emerald-600 text-white rounded-[2rem] mx-4 my-16 overflow-hidden relative shadow-2xl shadow-emerald-200">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-amber-400/20 rounded-full blur-[120px]"></div>
 

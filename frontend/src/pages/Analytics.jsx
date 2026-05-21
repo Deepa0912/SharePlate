@@ -92,7 +92,7 @@ function Analytics() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 rounded-[3.5rem] p-8 md:p-16 text-white relative overflow-hidden shadow-2xl shadow-emerald-200/50"
+            className="bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 rounded-[2.5rem] p-8 md:p-12 text-white relative overflow-hidden shadow-2xl shadow-emerald-200/50"
           >
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-[120px] animate-pulse"></div>
             <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-teal-400/20 rounded-full translate-y-1/3 -translate-x-1/4 blur-[100px]"></div>
@@ -126,7 +126,7 @@ function Analytics() {
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-8 bg-white border border-slate-100 rounded-[3rem] p-10 md:p-12 shadow-sm hover:shadow-2xl transition-all duration-700 group"
+            className="lg:col-span-8 bg-white border border-slate-100 rounded-[2rem] p-8 md:p-10 shadow-sm hover:shadow-2xl transition-all duration-700 group"
           >
             <div className="flex justify-between items-start mb-12">
               <div>
@@ -170,7 +170,7 @@ function Analytics() {
             initial={{ opacity: 0, x: 20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-[3rem] p-10 md:p-12 shadow-2xl flex flex-col relative overflow-hidden"
+            className="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-[2rem] p-8 md:p-10 shadow-2xl flex flex-col relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
             <h3 className="text-3xl font-black text-white tracking-tighter mb-4">Rescue Mix</h3>
@@ -205,7 +205,7 @@ function Analytics() {
         </div>
 
         {/* Geographic Hubs */}
-        <section className="bg-white border border-slate-100 rounded-[4rem] p-12 md:p-20 shadow-sm relative overflow-hidden">
+        <section className="bg-white border border-slate-100 rounded-[3rem] p-10 md:p-16 shadow-sm relative overflow-hidden">
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-emerald-50 rounded-full blur-[100px]"></div>
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
             <div>
@@ -264,7 +264,7 @@ function Analytics() {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
-          className="bg-slate-50 border border-slate-100 rounded-[4rem] p-16 md:p-24 shadow-sm"
+          className="bg-slate-50 border border-slate-100 rounded-[3rem] p-12 md:p-16 shadow-sm"
         >
           <h3 className="text-4xl md:text-5xl font-black text-slate-900 mb-4 tracking-tighter">Ready to scale the mission?</h3>
           <p className="text-slate-500 font-medium text-lg mb-12 max-w-xl mx-auto">Your donation today fuels the trajectory of tomorrow's hunger-free India.</p>

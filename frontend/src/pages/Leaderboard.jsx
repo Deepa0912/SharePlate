@@ -14,16 +14,16 @@ const HeroCard = ({ entry, isMe }) => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative p-8 rounded-[3rem] border transition-all duration-500 overflow-hidden group ${isMe
-                ? "bg-slate-900 text-white border-slate-800 shadow-2xl"
-                : "bg-white text-slate-800 border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-100"
+        className={`relative p-6 rounded-[2rem] border transition-all duration-500 overflow-hidden group ${isMe
+            ? "bg-slate-900 text-white border-slate-800 shadow-2xl"
+            : "bg-white text-slate-800 border-slate-100 shadow-sm hover:shadow-xl hover:border-emerald-100"
             }`}
     >
         {/* Rank Badge */}
         <div className={`absolute top-6 right-8 w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl shadow-lg ${entry.rank === 1 ? "bg-amber-400 text-white shadow-amber-200" :
-                entry.rank === 2 ? "bg-slate-300 text-white shadow-slate-200" :
-                    entry.rank === 3 ? "bg-amber-600/60 text-white shadow-amber-600/20" :
-                        isMe ? "bg-emerald-500 text-white" : "bg-slate-50 text-slate-400"
+            entry.rank === 2 ? "bg-slate-300 text-white shadow-slate-200" :
+                entry.rank === 3 ? "bg-amber-600/60 text-white shadow-amber-600/20" :
+                    isMe ? "bg-emerald-500 text-white" : "bg-slate-50 text-slate-400"
             }`}>
             #{entry.rank}
         </div>
@@ -131,7 +131,7 @@ function Leaderboard() {
                         <motion.section
                             initial={{ opacity: 0, y: 30 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mb-16 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[4rem] p-12 text-white relative overflow-hidden shadow-2xl shadow-emerald-500/20"
+                            className="mb-16 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[3rem] p-10 text-white relative overflow-hidden shadow-2xl shadow-emerald-500/20"
                         >
                             <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2"></div>
 
@@ -173,7 +173,7 @@ function Leaderboard() {
                     </div>
 
                     <aside className="space-y-8">
-                        <div className="bg-white border border-slate-100 rounded-[3rem] p-10 shadow-sm relative overflow-hidden group">
+                        <div className="bg-white border border-slate-100 rounded-[2rem] p-8 shadow-sm relative overflow-hidden group">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-2xl group-hover:bg-amber-500/10 transition-all duration-700"></div>
                             <Award className="text-amber-500 mb-6 group-hover:rotate-12 transition-transform" size={48} />
                             <h5 className="text-xl font-black text-slate-800 mb-4 tracking-tight">Karma Rewards</h5>
@@ -187,7 +187,7 @@ function Leaderboard() {
                             </div>
                         </div>
 
-                        <div className="bg-slate-900 rounded-[3rem] p-10 text-white shadow-2xl relative overflow-hidden">
+                        <div className="bg-slate-900 rounded-[2rem] p-8 text-white shadow-2xl relative overflow-hidden">
                             <Star className="text-emerald-400 mb-6 animate-pulse" size={48} />
                             <h5 className="text-xl font-black mb-4 tracking-tight">Tier Roadmap</h5>
                             <div className="space-y-6">
